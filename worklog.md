@@ -41,3 +41,25 @@ Work Log:
 Stage Summary:
 - Guest mode active: every section usable without registration; real OTP login still available via dropdown
 - Guest data (ads/animals/favorites) stored under shared guest account — acceptable per user's "فعلا" instruction
+
+---
+Task ID: vercel-demo-fallback
+Agent: Main agent
+Task: Fix Vercel deployment — blank site (empty content) and phone-number wall for sections
+
+Work Log:
+- Diagnosed root cause: Vercel serverless cannot host SQLite file DB → all API routes fail (500/401) → empty home page + guest login fails → auth wall reappears
+- Created src/lib/demo-data.ts: rich demo dataset (10 categories, 9 ads, 5 vets, 3 stores+7 products, 4 plans, 2 animals with health records, 2 herds, 6 expenses, demo chat/order/wallet/notifications) + GUEST_USER + localStorage helpers
+- Created src/lib/demo-api.ts: demoFetch router simulating every endpoint (ads CRUD+filters, favorites toggle, cart, orders+wallet deduction, wallet charge, animals+records, herds, expenses analytics, subscription purchase, chat with seller auto-reply, OTP demo login)
+- api.ts: tryDemo fallback — triggers on network error, 5xx, or 401 with demo token; demo mode flag skips server calls entirely (except /api/ai/* and /api/nutrition/calculate which really work on server)
+- page.tsx: if /api/auth/guest fails → enableDemoMode() + client-side GUEST_USER ('demo-token') → zero auth walls
+- AI vet/nutrition routes: user optional (noDb mode → unlimited usage), usage tracking wrapped in catch
+- AI search: category fallback list; nutrition/calculate: seed foods fallback (exported foods from seed-data.ts)
+- sw.js cache bumped to v2
+- Tested with production build + hidden DB file (exact Vercel simulation): home/vets/stores/animals/chat/create-ad/subscription all work without login; real AI vet answered live Persian question
+- Restored DB, verified dev mode intact, pushed (0952dff)
+
+Stage Summary:
+- Vercel deploy will now boot in full demo mode: every section accessible without phone, demo data everywhere, real AI working
+- Normal mode (with DB) unchanged — demo layer only activates on server failure
+- User must just redeploy (Vercel auto-deploys from GitHub main) and optionally clear site data once
