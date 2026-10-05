@@ -1,0 +1,505 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../db/bazargah.db"
+}
+
+// ============ Users & Auth ============
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  firstName     String?
+  lastName      String?
+  avatar        String?
+  province      String?
+  city          String?
+  roles         String   @default("BUYER") // JSON array: BUYER,ANIMAL_SELLER,FOOD_SELLER,VET,ADMIN
+  isVerified    Boolean  @default(false)
+  walletBalance Int      @default(0) // Toman
+  loyaltyPoints Int      @default(0)
+  planKey       String   @default("FREE")
+  planExpiresAt DateTime?
+  referralCode  String   @unique @default("")
+  createdAt     DateTime @default(now())
+
+  ads           Ad[]
+  animals       Animal[]
+  favorites     Favorite[]
+  conversations ConversationA[] @relation("buyerConversations")
+  sellerChats   ConversationA[] @relation("sellerConversations")
+  messages      Message[]
+  aiUsages      AIUsage[]
+  bookings      Booking[]
+  cartItems     CartItem[]
+  orders        Order[]
+  subscriptions UserSubscription[]
+  notifications Notification[]
+  herds         Herd[]
+  expenses      Expense[]
+  walletTx      WalletTransaction[]
+  nutritionPlans NutritionPlan[]
+}
+
+model OTP {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+// ============ Marketplace ============
+model Category {
+  id         String @id @default(cuid())
+  slug       String @unique
+  name       String
+  icon       String @default(" Package")
+  type       String @default("ANIMAL") // ANIMAL, FEED, PRODUCT, SERVICE
+  image      String?
+  order      Int    @default(0)
+  attributes String @default("[]") // JSON attribute definitions
+
+  ads Ad[]
+}
+
+model Ad {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  description   String   @default("")
+  price         Int      @default(0)
+  negotiable    Boolean  @default(false)
+  province      String
+  city          String
+  images        String   @default("[]") // JSON array
+  video         String?
+  categoryId    String
+  userId        String
+  status        String   @default("ACTIVE") // DRAFT,PENDING,ACTIVE,REJECTED,EXPIRED,SUSPENDED,DELETED
+  isFeatured    Boolean  @default(false)
+  featuredUntil DateTime?
+  ladderedUntil DateTime?
+  isMultiCity   Boolean  @default(false)
+  attributes    String   @default("{}") // JSON: breed, age, gender, weight...
+  views         Int      @default(0)
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  favorites  Favorite[]
+  reports    Report[]
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  adId      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  ad   Ad   @relation(fields: [adId], references: [id])
+
+  @@unique([userId, adId])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  adId      String
+  userId    String
+  reason    String
+  status    String   @default("PENDING") // PENDING,RESOLVED,REJECTED
+  createdAt DateTime @default(now())
+
+  ad Ad @relation(fields: [adId], references: [id])
+}
+
+// ============ Chat ============
+model ConversationA {
+  id            String   @id @default(cuid())
+  buyerId       String
+  sellerId      String
+  adId          String?
+  lastMessage   String   @default("")
+  lastMessageAt DateTime @default(now())
+
+  buyer    User    @relation("buyerConversations", fields: [buyerId], references: [id])
+  seller   User    @relation("sellerConversations", fields: [sellerId], references: [id])
+  messages Message[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation ConversationA @relation(fields: [conversationId], references: [id])
+  sender       User          @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+}
+
+// ============ AI ============
+model AIUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // VET, NUTRITION, SEARCH
+  tokens    Int      @default(0)
+  cost      Float    @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, type])
+}
+
+// ============ Animals & Health ============
+model Animal {
+  id         String   @id @default(cuid())
+  publicId   String   @unique
+  name       String
+  species    String // COW, SHEEP, GOAT, CHICKEN, HORSE, DOG, CAT, BUFFALO, CAMEL, OTHER
+  breed      String?
+  gender     String   @default("UNKNOWN") // MALE, FEMALE, UNKNOWN
+  birthDate  String?
+  weight     Float?
+  color      String?
+  purpose    String?  // DAIRY, MEAT, PET, LAYING, WOOL, WORK
+  environment String? // FARM, HOUSE, STABLE, FREE_RANGE
+  images     String   @default("[]")
+  isPublic   Boolean  @default(false)
+  notes      String?
+  userId     String
+  createdAt  DateTime @default(now())
+
+  owner          User              @relation(fields: [userId], references: [id])
+  healthRecords  HealthRecord[]
+  vaccinations   Vaccination[]
+  medications    Medication[]
+  tests          Test[]
+  dailyLogs      DailyLog[]
+  nutritionPlans NutritionPlan[]
+  expenses       Expense[]
+}
+
+model HealthRecord {
+  id          String   @id @default(cuid())
+  animalId    String
+  type        String   @default("NOTE") // NOTE, ILLNESS, TREATMENT, SURGERY, INJURY
+  title       String
+  description String?
+  vetName     String?
+  date        String
+  createdAt   DateTime @default(now())
+
+  animal Animal @relation(fields: [animalId], references: [id])
+
+  @@index([animalId])
+}
+
+model Vaccination {
+  id         String   @id @default(cuid())
+  animalId   String
+  vaccine    String
+  date       String
+  nextDate   String?
+  vetName    String?
+  createdAt  DateTime @default(now())
+
+  animal Animal @relation(fields: [animalId], references: [id])
+
+  @@index([animalId])
+}
+
+model Medication {
+  id        String   @id @default(cuid())
+  animalId  String
+  name      String
+  dose      String?
+  startDate String
+  endDate   String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  animal Animal @relation(fields: [animalId], references: [id])
+
+  @@index([animalId])
+}
+
+model Test {
+  id        String   @id @default(cuid())
+  animalId  String
+  name      String
+  result    String?
+  date      String
+  createdAt DateTime @default(now())
+
+  animal Animal @relation(fields: [animalId], references: [id])
+
+  @@index([animalId])
+}
+
+model DailyLog {
+  id        String   @id @default(cuid())
+  animalId  String
+  date      String
+  weight    Float?
+  feedKg    Float?
+  waterL    Float?
+  production String? // milk liters, eggs count...
+  activity  String?
+  symptoms  String?
+  createdAt DateTime @default(now())
+
+  animal Animal @relation(fields: [animalId], references: [id])
+
+  @@index([animalId])
+}
+
+// ============ Nutrition ============
+model Food {
+  id          String  @id @default(cuid())
+  name        String
+  category    String @default("ROUGHAGE") // CONCENTRATE, ROUGHAGE, PROTEIN, MINERAL, ENERGY, SUPPLEMENT
+  species     String  @default("ALL") // COW, SHEEP, GOAT, POULTRY, ALL
+  dryMatter   Float   @default(88) // %
+  protein     Float   @default(0) // % DM
+  energy      Float   @default(0) // Mcal/kg
+  fiber       Float   @default(0) // %
+  fat         Float   @default(0) // %
+  calcium     Float   @default(0) // %
+  phosphorus  Float   @default(0) // %
+  brand       String?
+  pricePerKg  Int     @default(0) // Toman
+}
+
+model NutritionPlan {
+  id           String   @id @default(cuid())
+  userId       String
+  animalId     String?
+  species      String
+  breed        String?
+  ageMonths    Int      @default(12)
+  gender       String   @default("FEMALE")
+  weightKg     Float
+  goal         String   @default("MAINTAIN") // GROW, MAINTAIN, GAIN, MILK, PREGNANT, LOSE, FATTENING
+  environment  String   @default("FARM")
+  tempC        Float?
+  engineOutput String   // JSON calculation result
+  aiExplanation String?
+  version      Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id])
+  animal Animal? @relation(fields: [animalId], references: [id])
+}
+
+// ============ Veterinary ============
+model Vet {
+  id             String  @id @default(cuid())
+  userId         String?
+  name           String
+  specialty      String
+  bio            String  @default("")
+  province       String  @default("تهران")
+  city           String  @default("تهران")
+  image          String?
+  rating         Float   @default(4.5)
+  reviewCount    Int     @default(0)
+  pricePerSession Int    @default(200000)
+  isVerified     Boolean @default(false)
+  commissionRate Float   @default(10)
+  services       String  @default("[]")
+  availableSlots String  @default("[]")
+  bookings       Booking[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  vetId       String
+  userId      String
+  slot        String
+  sessionType String   @default("CHAT") // CHAT, CALL, VIDEO, CLINIC
+  status      String   @default("PENDING") // PENDING,CONFIRMED,DONE,CANCELLED
+  price       Int      @default(0)
+  commission  Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  vet   Vet  @relation(fields: [vetId], references: [id])
+  user  User @relation(fields: [userId], references: [id])
+}
+
+// ============ E-commerce ============
+model Store {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  logo        String?
+  description String  @default("")
+  province    String  @default("تهران")
+  city        String  @default("تهران")
+  phone       String?
+  rating      Float   @default(4.5)
+  ownerId     String?
+  isActive    Boolean @default(true)
+  products    Product[]
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  storeId     String
+  name        String
+  slug        String  @unique
+  description String  @default("")
+  price       Int
+  oldPrice    Int?
+  image       String?
+  category    String  @default("FOOD") // FOOD, EQUIPMENT, MEDICINE, TOOL
+  stock       Int     @default(100)
+  rating      Float   @default(4.5)
+  isActive    Boolean @default(true)
+
+  store     Store      @relation(fields: [storeId], references: [id])
+  cartItems CartItem[]
+  orderItems OrderItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  qty       Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user     User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  orderNo     String   @unique
+  userId      String
+  items       String   @default("[]") // JSON snapshot
+  total       Int      @default(0)
+  status      String   @default("PENDING") // PENDING,PAID,SHIPPING,DELIVERED,CANCELLED
+  address     String?
+  phone       String?
+  paymentMethod String @default("WALLET")
+  createdAt   DateTime @default(now())
+
+  user  User        @relation(fields: [userId], references: [id])
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  qty       Int
+  price     Int
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// ============ Subscription & Wallet ============
+model SubscriptionPlan {
+  id             String @id @default(cuid())
+  key            String @unique // FREE, PRO, SELLER, FARM
+  name           String
+  price          Int    @default(0) // monthly Toman
+  dailyAiMessages Int   @default(10)
+  maxActiveAds   Int    @default(5)
+  features       String @default("[]")
+  color          String @default("#16a34a")
+  isActive       Boolean @default(true)
+}
+
+model UserSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  planKey   String
+  price     Int
+  startsAt  DateTime @default(now())
+  expiresAt DateTime
+  status    String   @default("ACTIVE")
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int
+  type        String // CHARGE, PAYMENT, REFUND, GIFT, PAYOUT
+  description String   @default("")
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ============ Livestock Management ============
+model Herd {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  species     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  userId    String
+  animalId  String?
+  herdId    String?
+  type      String   @default("FEED") // FEED, MEDICINE, VET, TRANSPORT, LABOR, OTHER
+  amount    Int
+  note      String?
+  date      String
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id])
+  animal Animal? @relation(fields: [animalId], references: [id])
+}
+
+// ============ System ============
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String   @default("")
+  type      String   @default("SYSTEM")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
