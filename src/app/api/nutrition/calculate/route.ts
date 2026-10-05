@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { foods as seedFoods } from '@/lib/seed-data'
 
 /**
  * Nutrition Engine API — محاسبات عددی جیره (خالص علمی، بدون AI)
@@ -15,7 +16,13 @@ export async function POST(req: Request) {
     }
 
     // دریافت بانک خوراک — فیلتر بر اساس گونه (خوراک سگ برای گاو استفاده نمی‌شود!)
-    const foods = await db.food.findMany()
+    // اگر دیتابیس در دسترس نبود (مثل Vercel)، از بانک خوراک پیش‌فرض seed استفاده می‌کنیم
+    let foods: { id: string; name: string; category: string; dryMatter: number; protein: number; energy: number; fiber: number; fat: number; calcium: number; phosphorus: number; pricePerKg: number; species: string }[]
+    try {
+      foods = await db.food.findMany()
+    } catch {
+      foods = seedFoods.map((f, i) => ({ ...f, id: `seed-food-${i + 1}` }))
+    }
     const speciesCompatible = foods.filter(f => f.species === 'ALL' || f.species === species)
     const foodNutritions = speciesCompatible.map(f => ({
       id: f.id, name: f.name, category: f.category, dryMatter: f.dryMatter,

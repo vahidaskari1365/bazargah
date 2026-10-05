@@ -13,7 +13,19 @@ export async function POST(req: Request) {
       return Response.json({ error: 'عبارت جستجو کوتاه است' }, { status: 400 })
     }
 
-    const categories = await db.category.findMany({ select: { slug: true, name: true } })
+    // دسته‌بندی‌ها — اگر دیتابیس در دسترس نبود، از فهرست پیش‌فرض استفاده می‌کنیم
+    let categories: { slug: string; name: string }[]
+    try {
+      categories = await db.category.findMany({ select: { slug: true, name: true } })
+    } catch {
+      categories = [
+        { slug: 'live-animal', name: 'دام زنده' }, { slug: 'feed', name: 'خوراک' },
+        { slug: 'poultry', name: 'طیور' }, { slug: 'equipment', name: 'تجهیزات' },
+        { slug: 'vet', name: 'دامپزشک' }, { slug: 'stores', name: 'فروشگاه‌ها' },
+        { slug: 'sheep-goat', name: 'گوسفند و بز' }, { slug: 'pets', name: 'حیوانات خانگی' },
+        { slug: 'horse', name: 'اسب' }, { slug: 'calf', name: 'گوساله' },
+      ]
+    }
 
     const { content } = await aiChat([
       {

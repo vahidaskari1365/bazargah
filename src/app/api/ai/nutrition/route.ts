@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { getUserFromRequest, unauthorized } from '@/lib/auth'
+import { getUserFromRequest } from '@/lib/auth'
 import { aiChat } from '@/lib/ai'
 
 /**
@@ -7,8 +7,13 @@ import { aiChat } from '@/lib/ai'
  * Nutrition Engine (محاسبه عددی) → AI (توضیح و تعامل) → پاسخ نهایی
  */
 export async function POST(req: Request) {
-  const user = await getUserFromRequest(req)
-  if (!user) return unauthorized()
+  // شناسایی کاربر — اگر دیتابیس در دسترس نبود، بدون ثبت Usage ادامه می‌دهیم
+  let user: Awaited<ReturnType<typeof getUserFromRequest>> = null
+  try {
+    user = await getUserFromRequest(req)
+  } catch {
+    user = null
+  }
 
   try {
     const { engineOutput, question } = await req.json()
@@ -38,9 +43,12 @@ ${JSON.stringify(engine, null, 1)}`
       { role: 'user', content: 'لطفاً جیره محاسبه‌شده را کامل و قابل فهم توضیح بده.' },
     ], 1000)
 
-    await db.aIUsage.create({
-      data: { userId: user.id, type: 'NUTRITION', tokens, cost: tokens * 0.00002 },
-    })
+    // ثبت Usage (در صورت در دسترس بودن دیتابیس)
+    if (user) {
+      await db.aIUsage.create({
+        data: { userId: user.id, type: 'NUTRITION', tokens, cost: tokens * 0.00002 },
+      }).catch(() => {})
+    }
 
     return Response.json({ explanation: content })
   } catch (e) {

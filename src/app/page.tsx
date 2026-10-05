@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useStore } from '@/lib/store'
+import { enableDemoMode, GUEST_USER } from '@/lib/demo-data'
 import { BottomNav } from '@/components/bazargah/bottom-nav'
 import { TopNav } from '@/components/bazargah/top-nav'
 import { HomeView } from '@/components/bazargah/home'
@@ -86,6 +87,7 @@ export default function BazargahApp() {
   }, [])
 
   // ورود خودکار مهمان — همه امکانات بدون نیاز به لاگین کار می‌کنند (فعلاً)
+  // اگر سرور/دیتابیس در دسترس نبود (مثل Vercel بدون SQLite)، مهمان کاملاً سمت مرورگر ساخته می‌شود
   useEffect(() => {
     const s = useStore.getState()
     if (s.token) {
@@ -93,13 +95,19 @@ export default function BazargahApp() {
       return
     }
     fetch('/api/auth/guest', { method: 'POST' })
-      .then(r => r.json())
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(res => {
         if (res.token && res.user) {
           s.setAuth(res.token, res.user)
+        } else {
+          throw new Error('guest-failed')
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        // سرور/دیتابیس در دسترس نیست → حالت دموی کامل سمت مرورگر
+        enableDemoMode()
+        s.setAuth('demo-token', GUEST_USER)
+      })
       .finally(() => useStore.getState().setGuestReady(true))
   }, [])
 

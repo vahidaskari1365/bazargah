@@ -1,20 +1,54 @@
 'use client'
 
 import { useStore } from './store'
+import { isDemoMode } from './demo-data'
+import { demoFetch } from './demo-api'
 
-/** کلاینت API با توکن خودکار */
+/** مسیرهایی که حتی در حالت دمو به سرور می‌روند (هوش مصنوعی و موتور تغذیه واقعی روی سرور کار می‌کنند) */
+const SERVER_ALWAYS = ['/api/ai/', '/api/nutrition/calculate']
+
+/**
+ * کلاینت API با توکن خودکار + حالت دمو:
+ * اگر سرور/دیتابیس در دسترس نباشد (مثل Vercel بدون دیتابیس)، پاسخ از لایه دموی مرورگر برمی‌گردد.
+ */
 export async function api(path: string, options: RequestInit = {}) {
+  const method = (options.method || 'GET').toUpperCase()
+  const bodyStr = typeof options.body === 'string' ? options.body : undefined
   const token = useStore.getState().token
+
+  const tryDemo = async () => demoFetch(path, method, bodyStr)
+
+  // حالت دموی فعال — بدون فراخوانی سرور (به‌جز AI و تغذیه)
+  if (isDemoMode() && !SERVER_ALWAYS.some((s) => path.startsWith(s))) {
+    const demo = await tryDemo()
+    if (demo !== undefined) return demo
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(path, { ...options, headers })
+  let res: Response
+  try {
+    res = await fetch(path, { ...options, headers })
+  } catch {
+    // شبکه در دسترس نیست → لایه دمو
+    const demo = await tryDemo()
+    if (demo !== undefined) return demo
+    throw new Error('ارتباط با سرور برقرار نشد')
+  }
+
   const data = await res.json().catch(() => ({}))
 
   if (!res.ok) {
+    // سرور/دیتابیس معیوب (مثل Vercel بدون SQLite) یا نشست دمو → لایه دمو
+    const broken = res.status >= 500 || (res.status === 401 && token === 'demo-token')
+    if (broken) {
+      const demo = await tryDemo()
+      if (demo !== undefined) return demo
+    }
     const err = new Error(data.error || 'خطای غیرمنتظره') as Error & { status?: number; data?: unknown }
     err.status = res.status
     err.data = data

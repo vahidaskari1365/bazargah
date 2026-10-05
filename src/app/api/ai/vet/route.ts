@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { getUserFromRequest, unauthorized } from '@/lib/auth'
+import { getUserFromRequest } from '@/lib/auth'
 import { aiChat, ChatMessage } from '@/lib/ai'
 
 /**
@@ -8,6 +8,7 @@ import { aiChat, ChatMessage } from '@/lib/ai'
  * - کاربر اشتراکی: مطابق پلن
  * - ثبت کامل Usage برای کنترل هزینه
  * - ایمنی: تشخیص قطعی ممنوع، ارجاع به دامپزشک واقعی
+ * - مقاوم در برابر قطعی دیتابیس: اگر دیتابیس در دسترس نبود، بدون سهمیه پاسخ داده می‌شود
  */
 
 const VET_SYSTEM_PROMPT = `تو «دستیار دامپزشکی بازارگاه» هستی؛ یک دستیار هوشمند کمک‌آموزشی در حوزه سلامت دام، طیور و حیوانات خانگی.
@@ -22,8 +23,14 @@ const VET_SYSTEM_PROMPT = `تو «دستیار دامپزشکی بازارگاه
 7. در انتها اگر مرتبط بود، یک جمله درباره خدمات مرتبط بازارگاه (دامپزشک، خوراک) بنویس.`
 
 export async function POST(req: Request) {
-  const user = await getUserFromRequest(req)
-  if (!user) return unauthorized()
+  // شناسایی کاربر — اگر دیتابیس در دسترس نبود (مثل Vercel)، بدون سهمیه ادامه می‌دهیم
+  let user: Awaited<ReturnType<typeof getUserFromRequest>> = null
+  try {
+    user = await getUserFromRequest(req)
+  } catch {
+    user = null
+  }
+  const noDb = !user
 
   try {
     const { messages } = await req.json() as { messages: ChatMessage[] }
@@ -31,24 +38,32 @@ export async function POST(req: Request) {
       return Response.json({ error: 'پیام ارسال نشده است' }, { status: 400 })
     }
 
-    // --- محدودیت پیام روزانه بر اساس پلن ---
-    const plan = await db.subscriptionPlan.findUnique({ where: { key: user.planKey } })
-    const dailyLimit = plan?.dailyAiMessages ?? 10
+    // --- محدودیت پیام روزانه بر اساس پلن (فقط وقتی دیتابیس در دسترس است) ---
+    let usageToday = 0
+    let dailyLimit = 10
+    if (!noDb) {
+      try {
+        const plan = await db.subscriptionPlan.findUnique({ where: { key: user!.planKey } })
+        dailyLimit = plan?.dailyAiMessages ?? 10
 
-    const startOfDay = new Date()
-    startOfDay.setHours(0, 0, 0, 0)
+        const startOfDay = new Date()
+        startOfDay.setHours(0, 0, 0, 0)
 
-    const usageToday = await db.aIUsage.count({
-      where: { userId: user.id, type: 'VET', createdAt: { gte: startOfDay } },
-    })
+        usageToday = await db.aIUsage.count({
+          where: { userId: user!.id, type: 'VET', createdAt: { gte: startOfDay } },
+        })
 
-    if (usageToday >= dailyLimit) {
-      return Response.json({
-        error: `سهمیه پیام هوش مصنوعی امروز (${dailyLimit} پیام) تمام شد`,
-        limitReached: true,
-        planName: plan?.name,
-        upgradeHint: user.planKey === 'FREE' ? 'با ارتقای اشتراک، سهمیه پیام‌ها چند برابر می‌شود' : null,
-      }, { status: 429 })
+        if (usageToday >= dailyLimit) {
+          return Response.json({
+            error: `سهمیه پیام هوش مصنوعی امروز (${dailyLimit} پیام) تمام شد`,
+            limitReached: true,
+            planName: plan?.name,
+            upgradeHint: user!.planKey === 'FREE' ? 'با ارتقای اشتراک، سهمیه پیام‌ها چند برابر می‌شود' : null,
+          }, { status: 429 })
+        }
+      } catch {
+        dailyLimit = 10
+      }
     }
 
     // --- Anti-spam: طول پیام ---
@@ -69,14 +84,18 @@ export async function POST(req: Request) {
 
     const { content, tokens } = await aiChat(aiMessages, 900)
 
-    // --- ثبت Usage ---
-    await db.aIUsage.create({
-      data: { userId: user.id, type: 'VET', tokens, cost: tokens * 0.00002 },
-    })
+    // --- ثبت Usage (در صورت در دسترس بودن دیتابیس) ---
+    if (!noDb) {
+      await db.aIUsage.create({
+        data: { userId: user!.id, type: 'VET', tokens, cost: tokens * 0.00002 },
+      }).catch(() => {})
+    }
 
     return Response.json({
       reply: content,
-      usage: { used: usageToday + 1, limit: dailyLimit, remaining: Math.max(dailyLimit - usageToday - 1, 0) },
+      usage: noDb
+        ? { used: 1, limit: 999, remaining: 998 }
+        : { used: usageToday + 1, limit: dailyLimit, remaining: Math.max(dailyLimit - usageToday - 1, 0) },
     })
   } catch (e) {
     console.error('AI Vet error:', e)

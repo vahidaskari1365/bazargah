@@ -28,7 +28,7 @@ const categories = [
   { slug: 'calf', name: 'گوساله', icon: '🐄', type: 'ANIMAL', image: '/images/calf.jpg', order: 10, attributes: '[]' },
 ]
 
-const foods = [
+export const foods = [
   { name: 'یونجه خشک', category: 'ROUGHAGE', species: 'ALL', dryMatter: 90, protein: 17, energy: 1.7, fiber: 30, fat: 2.5, calcium: 1.4, phosphorus: 0.22, pricePerKg: 8500 },
   { name: 'کاه گندم', category: 'ROUGHAGE', species: 'ALL', dryMatter: 89, protein: 4, energy: 0.9, fiber: 41, fat: 1.5, calcium: 0.3, phosphorus: 0.08, pricePerKg: 3000 },
   { name: 'سیلاژ ذرت', category: 'ROUGHAGE', species: 'ALL', dryMatter: 35, protein: 8, energy: 2.2, fiber: 24, fat: 3, calcium: 0.3, phosphorus: 0.2, pricePerKg: 2500 },
