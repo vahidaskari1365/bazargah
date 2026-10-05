@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Plus, Sprout, TrendingDown, PieChart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -102,27 +102,28 @@ export function ExpensesView() {
   const [addOpen, setAddOpen] = useState(false)
   const [form, setForm] = useState({ type: 'FEED', amount: '', note: '' })
 
+  const load = useCallback(async () => {
+    try {
+      const res = await api('/api/expenses')
+      setExpenses(res.expenses)
+      setByType(res.byType)
+      setTotal(res.total)
+    } catch { /* */ }
+    setLoading(false)
+  }, [])
+
   useEffect(() => {
     if (!checked) return
-    const run = async () => {
-      try {
-        const res = await api('/api/expenses')
-        setExpenses(res.expenses)
-        setByType(res.byType)
-        setTotal(res.total)
-      } catch { /* */ }
-      setLoading(false)
-    }
-    run()
-  }, [checked])
+    load()
+  }, [checked, load])
 
   async function add() {
     try {
-      await api('/api/expenses', { method: 'POST', body: JSON.stringify(form) })
+      await api('/api/expenses', { method: 'POST', body: JSON.stringify({ ...form, amount: form.amount.replace(/,/g, '') }) })
       toast({ title: 'هزینه ثبت شد' })
       setAddOpen(false)
       setForm({ type: 'FEED', amount: '', note: '' })
-      load()
+      await load()
     } catch (e) {
       toast({ title: (e as Error).message, variant: 'destructive' })
     }

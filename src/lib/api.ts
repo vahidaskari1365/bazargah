@@ -77,6 +77,19 @@ export const SPECIES_FA: Record<string, string> = {
   POULTRY: 'طیور', HORSE: 'اسب', DOG: 'سگ', CAT: 'گربه', CAMEL: 'شتر', OTHER: 'سایر',
 }
 
+/** برچسب فارسی کلیدهای ویژگی آگهی (فرم ثبت با کلید انگلیسی ذخیره می‌کند) */
+export const ATTR_LABEL_FA: Record<string, string> = {
+  breed: 'نژاد', age: 'سن', weight: 'وزن', gender: 'جنسیت', brand: 'برند',
+}
+
+/** نمایش مقدار ویژگی با واحد مناسب */
+export function attrValueFa(key: string, value: unknown): string {
+  const v = String(value)
+  if (key === 'age' && /^\d+$/.test(v)) return `${faNum(v)} ماه`
+  if (key === 'weight' && /^\d+$/.test(v)) return `${faNum(v)} کیلوگرم`
+  return v
+}
+
 export const SPECIES_ICONS: Record<string, string> = {
   COW: '🐄', SHEEP: '🐑', GOAT: '🐐', BUFFALO: '🐃',
   POULTRY: '🐔', HORSE: '🐎', DOG: '🐕', CAT: '🐈', CAMEL: '🐫', OTHER: '🐾',

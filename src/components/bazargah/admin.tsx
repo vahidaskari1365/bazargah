@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Users, Megaphone, Brain, ShieldCheck, Check, X, Star, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -17,31 +17,32 @@ export function AdminView() {
   const [ads, setAds] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const [s, u, a] = await Promise.all([
-          api('/api/admin/stats'),
-          api('/api/admin/users'),
-          api('/api/admin/ads'),
-        ])
-        setStats(s.stats)
-        setAiByType(s.aiByType || [])
-        setUsers(u.users)
-        setAds(a.ads)
-      } catch (e) {
-        toast({ title: (e as Error).message, variant: 'destructive' })
-      }
-      setLoading(false)
+  const load = useCallback(async () => {
+    try {
+      const [s, u, a] = await Promise.all([
+        api('/api/admin/stats'),
+        api('/api/admin/users'),
+        api('/api/admin/ads'),
+      ])
+      setStats(s.stats)
+      setAiByType(s.aiByType || [])
+      setUsers(u.users)
+      setAds(a.ads)
+    } catch (e) {
+      toast({ title: (e as Error).message, variant: 'destructive' })
     }
-    run()
+    setLoading(false)
   }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   async function adAction(adId: string, action: string) {
     try {
       await api('/api/admin/ads', { method: 'PUT', body: JSON.stringify({ adId, action }) })
       toast({ title: 'انجام شد' })
-      load()
+      await load()
     } catch (e) {
       toast({ title: (e as Error).message, variant: 'destructive' })
     }

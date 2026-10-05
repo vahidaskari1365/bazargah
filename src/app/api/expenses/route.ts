@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   if (!user) return unauthorized()
   try {
     const { type, amount, note, date, animalId } = await req.json()
-    const amt = parseInt(amount)
+    const amt = parseInt(String(amount).replace(/[^\d]/g, ''), 10)
     if (!amt || amt <= 0) return Response.json({ error: 'مبلغ نامعتبر' }, { status: 400 })
     const expense = await db.expense.create({
       data: {

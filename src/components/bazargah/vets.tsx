@@ -96,6 +96,10 @@ function BookingDialog({ vet, onClose }: { vet: Vet | null; onClose: () => void 
         method: 'POST',
         body: JSON.stringify({ vetId: vet.id, slot, sessionType }),
       })
+      // بروزرسانی موجودی کیف پول در استور تا پروفایل عدد قدیمی نشان ندهد
+      if (typeof res.walletBalance === 'number') {
+        useStore.getState().updateUser({ walletBalance: res.walletBalance })
+      }
       toast({
         title: 'نوبت رزرو شد ✅',
         description: `${vet.name} ساعت ${slot} — مبلغ ${res.booking.price.toLocaleString('fa-IR')} تومان از کیف پول کسر شد`,

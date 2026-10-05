@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageShell } from '@/components/bazargah/shared'
 import { useStore } from '@/lib/store'
 import { api } from '@/lib/api'
-import { PROVINCES } from '@/lib/api'
+import { PROVINCES, CITIES } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export function AuthView() {
@@ -187,7 +187,7 @@ export function AuthView() {
               <Select value={profile.city} onValueChange={(v) => setProfile(p => ({ ...p, city: v }))}>
                 <SelectTrigger className="h-11 rounded-2xl"><SelectValue placeholder="انتخاب شهر" /></SelectTrigger>
                 <SelectContent className="max-h-64">
-                  {[profile.city, 'مرکز استان', 'شهرستان دیگر'].filter(Boolean).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {(CITIES[profile.province] || [profile.province || '—']).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

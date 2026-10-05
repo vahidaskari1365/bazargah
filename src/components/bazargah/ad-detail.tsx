@@ -5,7 +5,7 @@ import { Heart, Share2, Flag, Phone, MessageCircle, MapPin, Eye, BadgeCheck } fr
 import { Button } from '@/components/ui/button'
 import { PageHeader, PageShell, LoadingView, AdCard } from '@/components/bazargah/shared'
 import { useStore } from '@/lib/store'
-import { api, faPrice, faNum, faDate } from '@/lib/api'
+import { api, faPrice, faNum, faDate, ATTR_LABEL_FA, attrValueFa } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export function AdDetailView({ id }: { id: string }) {
@@ -147,8 +147,8 @@ export function AdDetailView({ id }: { id: string }) {
                   .filter(([k]) => k !== 'تعداد عکس')
                   .map(([k, v]) => (
                     <div key={k} className="bg-green-50 dark:bg-green-900/30 rounded-xl px-3 py-2">
-                      <div className="text-[11px] text-gray-500">{k}</div>
-                      <div className="text-[13px] font-bold text-green-900 dark:text-green-100">{String(v)}</div>
+                      <div className="text-[11px] text-gray-500">{ATTR_LABEL_FA[k] || k}</div>
+                      <div className="text-[13px] font-bold text-green-900 dark:text-green-100">{attrValueFa(k, v)}</div>
                     </div>
                   ))}
               </div>

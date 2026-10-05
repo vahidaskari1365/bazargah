@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Plus, QrCode, Syringe, Pill, FlaskConical, Activity, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -207,17 +207,17 @@ export function AnimalDetailView({ id }: { id: string }) {
   const [recOpen, setRecOpen] = useState(false)
   const [recData, setRecData] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true)
-      try {
-        const res = await api(`/api/animals/${id}`)
-        setAnimal(res.animal)
-      } catch { /* */ }
-      setLoading(false)
-    }
-    run()
+  const load = useCallback(async () => {
+    try {
+      const res = await api(`/api/animals/${id}`)
+      setAnimal(res.animal)
+    } catch { /* */ }
   }, [id])
+
+  useEffect(() => {
+    setLoading(true)
+    load().finally(() => setLoading(false))
+  }, [load])
 
   async function addRecord() {
     try {
@@ -228,7 +228,7 @@ export function AnimalDetailView({ id }: { id: string }) {
       toast({ title: 'رکورد ثبت شد ✅' })
       setRecOpen(false)
       setRecData({})
-      load()
+      await load()
     } catch (e) {
       toast({ title: (e as Error).message, variant: 'destructive' })
     }

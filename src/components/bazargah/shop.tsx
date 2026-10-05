@@ -136,6 +136,10 @@ export function CartView() {
         method: 'POST',
         body: JSON.stringify({ address, phone }),
       })
+      // بروزرسانی موجودی کیف پول در استور
+      if (typeof res.walletBalance === 'number') {
+        useStore.getState().updateUser({ walletBalance: res.walletBalance })
+      }
       toast({ title: `سفارش ${res.order.orderNo} ثبت شد ✅`, description: 'پرداخت از کیف پول انجام شد' })
       navigate('orders')
     } catch (e) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { LogOut, Wallet as WalletIcon, Crown, Bell, Heart, FileText, Sprout, Receipt, Sparkles, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,11 +12,17 @@ import { toast } from '@/hooks/use-toast'
 
 /** پروفایل کاربر — منوی کامل */
 export function ProfileView() {
-  const { user, logout, navigate } = useStore()
+  const { user, logout, navigate, updateUser } = useStore()
   const [notifications, setNotifications] = useState(0)
 
   useEffect(() => {
     api('/api/notifications').then(res => setNotifications(res.unread)).catch(() => {})
+  }, [])
+
+  // بروزرسانی پروفایل از سرور (نقش‌ها، پلن و موجودی همیشه تازه باشد)
+  useEffect(() => {
+    api('/api/auth/me').then(res => updateUser(res.user)).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (!user) {
@@ -91,7 +97,7 @@ export function ProfileView() {
           {menu.map((m, i) => (
             <button
               key={m.label}
-              onClick={() => (m.view === 'my-ads' ? navigate('search', { myAds: '1' }) : navigate(m.view))}
+              onClick={() => (m.view === 'my-ads' ? navigate('my-ads') : navigate(m.view))}
               className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors ${i < menu.length - 1 ? 'border-b border-green-100/60 dark:border-gray-800' : ''}`}
             >
               <span className="text-green-700 dark:text-green-400">{m.icon}</span>
@@ -127,19 +133,20 @@ export function WalletView() {
   const [chargeOpen, setChargeOpen] = useState(false)
   const [amount, setAmount] = useState('')
 
+  const load = useCallback(async () => {
+    try {
+      const res = await api('/api/wallet')
+      setBalance(res.balance)
+      setTransactions(res.transactions)
+      updateUser({ walletBalance: res.balance })
+    } catch { /* */ }
+  }, [updateUser])
+
   useEffect(() => {
     if (!checked) return
-    const run = async () => {
-      try {
-        const res = await api('/api/wallet')
-        setBalance(res.balance)
-        setTransactions(res.transactions)
-        updateUser({ walletBalance: res.balance })
-      } catch { /* */ }
-      setLoading(false)
-    }
-    run()
-  }, [checked])
+    setLoading(true)
+    load().finally(() => setLoading(false))
+  }, [checked, load])
 
   async function charge() {
     try {
@@ -147,7 +154,7 @@ export function WalletView() {
       toast({ title: 'کیف پول شارژ شد ✅', description: `موجودی جدید: ${faNum(res.balance.toLocaleString('en-US'))} تومان` })
       setChargeOpen(false)
       setAmount('')
-      load()
+      await load()
     } catch (e) {
       toast({ title: (e as Error).message, variant: 'destructive' })
     }
@@ -256,7 +263,7 @@ export function SubscriptionView() {
 
   return (
     <PageShell image="/images/farm.jpg">
-      <PageHeader title="اشتراک بازارگاه" subtitle="پلن فعلی: رایگان — ارتقا بدهید" />
+      <PageHeader title="اشتراک بازارگاه" subtitle={user?.planKey && user.planKey !== 'FREE' ? `پلن فعلی شما: ${user.planKey === 'PRO' ? 'حرفه‌ای' : user.planKey === 'BUSINESS' ? 'بیزینس' : user.planKey} — از ۱۵ آگهی و سهمیه بیشتر لذت ببرید` : "پلن فعلی: رایگان — ارتقا بدهید"} />
       <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         <div className="grid sm:grid-cols-2 gap-3 mt-4">
           {plans.map((p) => {
