@@ -7,19 +7,21 @@ import { useStore } from '@/lib/store'
 import { api, faPrice, faNum } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
-/** هوک بررسی لاگین — اگر لاگین نبود به صفحه ورود هدایت می‌کند */
+/** هوک بررسی لاگین — با حالت مهمان: تا وقتی ورود خودکار مهمان انجام نشده صبر می‌کند */
 export function useRequireAuth() {
-  const { token, navigate } = useStore()
+  const { token, guestReady, navigate } = useStore()
   const [checked, setChecked] = useState(false)
   useEffect(() => {
-    if (!token) {
-      toast({ title: 'برای دسترسی به این بخش وارد حساب شوید' })
-      navigate('auth')
-    } else {
+    if (token) {
       setChecked(true)
+      return
     }
+    if (!guestReady) return // ورود خودکار مهمان در حال انجام است
+    // حساب مهمان هم در دسترس نبود (خطای سرور) → صفحه ورود
+    toast({ title: 'برای دسترسی به این بخش وارد حساب شوید' })
+    navigate('auth')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token])
+  }, [token, guestReady])
   return checked
 }
 

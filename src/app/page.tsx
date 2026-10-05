@@ -85,6 +85,24 @@ export default function BazargahApp() {
     }
   }, [])
 
+  // ورود خودکار مهمان — همه امکانات بدون نیاز به لاگین کار می‌کنند (فعلاً)
+  useEffect(() => {
+    const s = useStore.getState()
+    if (s.token) {
+      s.setGuestReady(true)
+      return
+    }
+    fetch('/api/auth/guest', { method: 'POST' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.token && res.user) {
+          s.setAuth(res.token, res.user)
+        }
+      })
+      .catch(() => {})
+      .finally(() => useStore.getState().setGuestReady(true))
+  }, [])
+
   return (
     <main className="min-h-dvh">
       {mounted && (

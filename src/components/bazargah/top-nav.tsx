@@ -1,6 +1,6 @@
 'use client'
 
-import { House, Search, Store, Stethoscope, Bot, HeartPulse, Brain, MessageCircle, Plus, User, Wallet, Crown, Bell, Heart, FileText, ShieldCheck, LogOut, Menu } from 'lucide-react'
+import { House, Search, Store, Stethoscope, Bot, HeartPulse, Brain, MessageCircle, Plus, User, Wallet, Crown, Bell, Heart, FileText, ShieldCheck, LogOut, LogIn, Menu } from 'lucide-react'
 import { useStore, ViewName } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,19 +13,18 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 /** منوی بالای صفحه — فقط دسکتاپ (lg به بالا). موبایل از BottomNav استفاده می‌کند */
+const GUEST_PHONE = '09000000000'
+
 export function TopNav() {
   const { stack, navigate, resetTo, user, token, logout } = useStore()
   const current = stack[stack.length - 1]?.view
 
   const go = (view: ViewName) => {
-    if (!token && (view === 'create-ad' || view === 'profile' || view === 'chat' || view === 'animals')) {
-      navigate('auth')
-      return
-    }
     navigate(view)
   }
 
   const isActive = (view: ViewName) => current === view
+  const isGuest = user?.phone === GUEST_PHONE
 
   const links: { view: ViewName; label: string; icon: React.ReactNode }[] = [
     { view: 'home', label: 'خانه', icon: <House className="w-4 h-4" /> },
@@ -101,7 +100,7 @@ export function TopNav() {
               <DropdownMenuTrigger asChild>
                 <button
                   aria-label="منوی کاربری"
-                  className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 text-white flex items-center justify-center font-bold text-[15px] shadow-md ring-2 ring-white/60 hover:ring-green-300 transition-all"
+                  className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-[15px] shadow-md ring-2 ring-white/60 hover:ring-green-300 transition-all ${isGuest ? 'bg-gradient-to-br from-gray-400 to-gray-600' : 'bg-gradient-to-br from-green-500 to-emerald-700'}`}
                 >
                   {user.firstName?.[0] || '👤'}
                 </button>
@@ -109,9 +108,18 @@ export function TopNav() {
               <DropdownMenuContent align="start" className="w-60 rounded-2xl p-2">
                 <DropdownMenuLabel>
                   <div className="font-bold text-[14px]">{user.firstName} {user.lastName}</div>
-                  <div className="text-[11px] text-gray-400 font-normal mt-0.5" dir="ltr">{user.phone}</div>
+                  {isGuest ? (
+                    <div className="text-[11px] text-amber-600 font-normal mt-0.5">حساب مهمان — همه امکانات آزاد است</div>
+                  ) : (
+                    <div className="text-[11px] text-gray-400 font-normal mt-0.5" dir="ltr">{user.phone}</div>
+                  )}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isGuest && (
+                  <DropdownMenuItem onClick={() => navigate('auth')} className="rounded-xl py-2.5 cursor-pointer font-bold text-green-700 focus:text-green-800">
+                    <LogIn className="w-4 h-4 ml-2" /> ورود / ثبت‌نام با شماره موبایل
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => navigate('profile')} className="rounded-xl py-2.5 cursor-pointer">
                   <User className="w-4 h-4 ml-2" /> پروفایل من
                 </DropdownMenuItem>
@@ -139,12 +147,14 @@ export function TopNav() {
                   </>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => { logout(); resetTo('home') }}
-                  className="rounded-xl py-2.5 cursor-pointer text-red-600 focus:text-red-700"
-                >
-                  <LogOut className="w-4 h-4 ml-2" /> خروج از حساب
-                </DropdownMenuItem>
+                {!isGuest && (
+                  <DropdownMenuItem
+                    onClick={() => { logout(); resetTo('home') }}
+                    className="rounded-xl py-2.5 cursor-pointer text-red-600 focus:text-red-700"
+                  >
+                    <LogOut className="w-4 h-4 ml-2" /> خروج از حساب
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

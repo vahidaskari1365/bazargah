@@ -51,6 +51,10 @@ interface BazargahState {
   // System
   splashDone: boolean
   setSplashDone: (v: boolean) => void
+
+  // Guest mode — ورود خودکار مهمان تا همه امکانات بدون لاگین کار کند
+  guestReady: boolean
+  setGuestReady: (v: boolean) => void
 }
 
 const storedToken = typeof window !== 'undefined' ? localStorage.getItem('bazargah-token') : null
@@ -96,4 +100,7 @@ export const useStore = create<BazargahState>((set, get) => ({
 
   splashDone: false,
   setSplashDone: (v) => set({ splashDone: v }),
+
+  guestReady: false,
+  setGuestReady: (v) => set({ guestReady: v }),
 }))

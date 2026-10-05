@@ -3,16 +3,12 @@
 import { House, Search, Plus, HeartPulse, User } from 'lucide-react'
 import { useStore, ViewName } from '@/lib/store'
 
-/** نویگیشن پایین — مطابق طرح ضمیمه: خانه، جستجو، ثبت آگهی (سبز بزرگ)، سلامت، پروفایل */
+/** نویگیشن پایین — فقط موبایل (زیر lg). مطابق طرح ضمیمه: خانه، جستجو، ثبت آگهی (سبز بزرگ)، سلامت، پروفایل */
 export function BottomNav() {
-  const { stack, navigate, resetTo, user, token } = useStore()
+  const { stack, navigate, resetTo, user } = useStore()
   const current = stack[stack.length - 1]?.view
 
   const go = (view: ViewName) => {
-    if (!token && (view === 'create-ad' || view === 'profile')) {
-      navigate('auth')
-      return
-    }
     navigate(view)
   }
 
