@@ -26,7 +26,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       where: { conversationId: id },
       orderBy: { createdAt: 'asc' },
     })
-    return Response.json({ messages, meId: user.id })
+    return Response.json({
+      messages,
+      meId: user.id,
+      conversation: {
+        id: conv.id,
+        buyerId: conv.buyerId,
+        sellerId: conv.sellerId,
+        buyer: { firstName: conv.buyer.firstName, lastName: conv.buyer.lastName, isVerified: conv.buyer.isVerified },
+        seller: { firstName: conv.seller.firstName, lastName: conv.seller.lastName, isVerified: conv.seller.isVerified },
+      },
+    })
   } catch (e) {
     console.error('Messages GET error:', e)
     return Response.json({ error: 'خطای سرور' }, { status: 500 })
