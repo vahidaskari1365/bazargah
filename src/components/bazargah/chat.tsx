@@ -239,9 +239,9 @@ export function ChatDetailView({ id }: { id: string }) {
   }
 
   return (
-    <PageShell image="/images/farm.jpg" className="flex flex-col h-dvh lg:h-[calc(100dvh-4rem)]">
+    <PageShell image="/images/farm.jpg" className="chat-shell flex flex-col h-dvh lg:h-[calc(100dvh-4rem)]">
       {/* ── هدر گفتگو با آواتار طرف مقابل ── */}
-      <header className="hero-header sticky top-0 lg:top-16 z-40 text-white" style={{ '--bg-image': 'url(/images/farm.jpg)' } as React.CSSProperties}>
+      <header className="hero-header relative z-40 text-white" style={{ '--bg-image': 'url(/images/farm.jpg)' } as React.CSSProperties}>
         <div className="relative z-10 flex items-center gap-3 px-4 lg:px-8 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3 max-w-7xl mx-auto">
           <button
             onClick={() => useStore.getState().back()}
@@ -270,7 +270,7 @@ export function ChatDetailView({ id }: { id: string }) {
       </header>
 
       {/* ── پیام‌ها ── */}
-      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-4 py-4 pb-32">
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-4 py-4 pb-44">
         {loading ? <LoadingView /> : (
           <>
             {messages.length === 0 && (
@@ -324,8 +324,8 @@ export function ChatDetailView({ id }: { id: string }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── نوار ورودی ── */}
-      <div className="fixed bottom-[70px] lg:bottom-4 inset-x-0 z-40 px-4">
+      {/* ── نوار ورودی — کاملاً بالای ناوبری پایین ── */}
+      <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-4 inset-x-0 z-40 px-4">
         <div className="max-w-3xl mx-auto glass-card rounded-[1.6rem] p-2 flex items-end gap-2 shadow-xl shadow-green-900/10">
           <textarea
             ref={inputRef}

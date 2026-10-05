@@ -14,11 +14,12 @@ export function Toaster() {
   const { toasts } = useToast()
 
   return (
-    <ToastProvider>
+    // مدت کوتاه ۲.۶ ثانیه — اعلان هیچ‌وقت سد راه کاربر نمی‌شود
+    <ToastProvider duration={2600}>
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
-            <div className="grid gap-1">
+            <div className="flex min-w-0 flex-col items-center">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>

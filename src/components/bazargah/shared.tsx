@@ -41,7 +41,9 @@ export function PageHeader({
 }) {
   return (
     <header
-      className={`${transparent ? '' : 'hero-header'} sticky top-0 lg:top-16 z-40 text-white`}
+      // بدون sticky: کلاس hero-header در CSS مقدار position:relative دارد و sticky را باطل می‌کرد؛
+      // ترکیب relative + top-16 باعث می‌شد هدر سبز ۶۴px روی اولین محتوای صفحه بیفتد (باگ دسکتاپ)
+      className={`${transparent ? '' : 'hero-header'} relative z-40 text-white`}
       style={image ? ({ '--bg-image': `url(${image})` } as React.CSSProperties) : undefined}
     >
       <div className="relative z-10 flex items-center gap-3 px-4 lg:px-8 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3 max-w-7xl mx-auto">

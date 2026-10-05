@@ -41,10 +41,10 @@ export function TopNav() {
   return (
     <nav
       aria-label="منوی اصلی دسکتاپ"
-      className="hidden lg:block sticky top-0 z-50 glass-card border-b border-white/50 dark:border-gray-800"
+      className="hidden lg:block sticky top-0 z-50 glass-card border-b border-white/50 dark:border-gray-800 h-16"
     >
       {/* ردیف بالا */}
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-4">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center gap-4">
         {/* لوگو */}
         <button
           onClick={() => resetTo('home')}

@@ -147,6 +147,12 @@
   position: relative;
   min-height: 100dvh;
 }
+/* شل صفحه‌های چت (AI دامپزشک / گفتگو): ارتفاع دقیق زیر ناوبری — min-height:100dvh
+   ارتفاع lg:h-[calc(100dvh-4rem)] را باطل می‌کرد و هدر سبز زیر ناوبری مخفی می‌شد */
+.page-bg.chat-shell {
+  min-height: 0;
+  overflow: hidden;
+}
 .page-bg::before {
   content: "";
   position: fixed;

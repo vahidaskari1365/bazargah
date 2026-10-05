@@ -106,9 +106,9 @@ export function AIVetView() {
   const quotaPct = usage ? Math.min(Math.round((usage.used / Math.max(usage.limit, 1)) * 100), 100) : 0
 
   return (
-    <PageShell image="/images/vet.jpg" className="flex flex-col h-dvh lg:h-[calc(100dvh-4rem)]">
+    <PageShell image="/images/vet.jpg" className="chat-shell flex flex-col h-dvh lg:h-[calc(100dvh-4rem)]">
       {/* ── هدر گفتگو با آواتار و وضعیت ── */}
-      <header className="hero-header sticky top-0 lg:top-16 z-40 text-white" style={{ '--bg-image': 'url(/images/vet.jpg)' } as React.CSSProperties}>
+      <header className="hero-header relative z-40 text-white" style={{ '--bg-image': 'url(/images/vet.jpg)' } as React.CSSProperties}>
         <div className="relative z-10 flex items-center gap-3 px-4 lg:px-8 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3 max-w-7xl mx-auto">
           <button
             onClick={() => useStore.getState().back()}
@@ -152,7 +152,7 @@ export function AIVetView() {
       </header>
 
       {/* ── محتوای گفتگو ── */}
-      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-4 py-5 pb-36">
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-4 py-5 pb-52">
         {/* حالت خالی — هیرو */}
         {messages.length === 0 && !sending && (
           <div className="animate-fade-up">
@@ -277,8 +277,8 @@ export function AIVetView() {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── نوار ورودی ثابت ── */}
-      <div className="fixed bottom-[70px] lg:bottom-4 inset-x-0 z-40 px-4 pb-2">
+      {/* ── نوار ورودی ثابت — کاملاً بالای ناوبری پایین ── */}
+      <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] lg:bottom-4 inset-x-0 z-40 px-4 pb-1">
         <div className="max-w-3xl mx-auto">
           {limitReached && (
             <div className="glass-card rounded-2xl p-3 mb-2 flex items-center gap-3 bg-amber-50/90 dark:bg-amber-900/30">
