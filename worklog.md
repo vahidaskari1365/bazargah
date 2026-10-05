@@ -22,3 +22,22 @@ Stage Summary:
 - Fully responsive: 3-col ad grids, wide containers, correct sticky offsets on desktop
 - Fixed pre-existing hydration error + duplicate React key error
 - All changes committed and pushed to GitHub main branch
+
+---
+Task ID: guest-mode-open-access
+Agent: Super Z (main)
+Task: Make all platform features accessible without login (user request: "فعلا بزار همه امکانات بدون وارد شدن انجام بشه")
+
+Work Log:
+- Created src/app/api/auth/guest/route.ts: POST upserts shared guest user (phone 09000000000, «مهمان بازارگاه», BUYER, walletBalance 500,000,000 demo credit) and returns real JWT session
+- store.ts: added guestReady/setGuestReady state
+- page.tsx: on mount, if no token → auto POST /api/auth/guest → setAuth; always sets guestReady in finally
+- shared.tsx useRequireAuth: waits for guestReady before any redirect to auth (fallback only if guest session truly unavailable)
+- top-nav.tsx: removed all login redirects in go(); guest avatar gray, dropdown shows «حساب مهمان — همه امکانات آزاد است» + «ورود / ثبت‌نام با شماره موبایل» item; «خروج» hidden for guest
+- bottom-nav.tsx: removed login redirects
+- Browser tests (fresh localStorage): auto guest login confirmed; animals/chat/create-ad/profile/wallet/AI-vet/favorites all open and function; wallet shows ۵۰۰M demo credit; AI vet usage ۱۰ از ۱۰; favorite POST+GET round-trip works
+- Build passed; pushed to github.com/vahidaskari1365/bazargah main (d25b9a8)
+
+Stage Summary:
+- Guest mode active: every section usable without registration; real OTP login still available via dropdown
+- Guest data (ads/animals/favorites) stored under shared guest account — acceptable per user's "فعلا" instruction
