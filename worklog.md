@@ -63,3 +63,23 @@ Stage Summary:
 - Vercel deploy will now boot in full demo mode: every section accessible without phone, demo data everywhere, real AI working
 - Normal mode (with DB) unchanged — demo layer only activates on server failure
 - User must just redeploy (Vercel auto-deploys from GitHub main) and optionally clear site data once
+
+---
+Task ID: ai-chat-fix-redesign
+Agent: Super Z (main)
+Task: رفع خرابی AI دامپزشک + بازطراحی گرافیکی صفحه‌های گفتگو (AI + چت خریدار/فروشنده)
+
+Work Log:
+- عیب‌یابی: تست مستقیم POST /api/ai/vet با curl → پاسخ واقعی AI برمی‌گشت؛ مشکل واقعی: ① پاسخ‌های Markdown خام (ستاره‌ها) بدون رندر ② نبود fallback وقتی سرویس AI در دسترس نیست (مثل Vercel)
+- سرور: اضافه شدن OFFLINE_KB (۱۱ موضوع: اسهال، نفخ، کلسیم/تب شیر، واکسیناسیون، لنگش، ورم پستان، انگل، تب، تنفسی، حیوانات خانگی، بی‌اشتهایی) + offlineVetAnswer؛ اگر aiChat شکست بخورد پاسخ آفلاین با fallback:true برگردد
+- کامپوننت جدید chat-ui.tsx: MarkdownText (بولد/تیتر/لیست تیره و عددی/جداکننده بدون وابستگی خارجی)، faTime، faDayLabel، faRelative، CopyBtn
+- ai-vet.tsx بازطراحی کامل: هدر با آواتار + نشانگر آنلاین + نوار پیشرفت سهمیه پیام، هیرو خوش‌آمد با چیپ تخصص‌ها، کارت‌های نمونه سؤال ۲×۲، حباب پیام با دنباله + زمان + دکمه کپی + نشان «پاسخ آفلاین»، typing با متن «در حال بررسی علائم...»، باگ inline با دکمه تلاش مجدد، textarea خود-رشد، اسکرول هوشمند
+- chat.tsx بازطراحی کامل: لیست با جستجو + آواتار گرادیانی + زمان نسبی فارسی؛ جزئیات با هدر آواتار طرف مقابل (API conversations info برگرداند)، جداکننده روز (امروز/دیروز/تاریخ)، حباب‌های گرادیانی + ✓✓ رنگی، رفع فلیکر polling (فقط پیام جدید animate)، اسکرول هوشمند نزدیک پایین
+- bun run build ✅ → تست مرورگر: صفحه AI (خالی + typing + پاسخ Markdown رندرشده) و چت (ارسال پیام موفق) — اسکرین‌شات در scripts/
+- commit b442940 + push به main → Vercel redeploy خودکار
+
+Stage Summary:
+- AI حالا هرگز «کور» نیست: سرویس آنلاین یا دانش‌نامه آفلاین همیشه پاسخ می‌دهد
+- Markdown فارسی صحیح رندر می‌شود (بولد، لیست، تیتر)
+- صفحه‌های گفتگو کاملاً گرافیکی شدند؛ فلیکر polling رفع شد
+- باقی‌مانده: مشکل اصلی Vercel (SQLite/blank page) هنوز باز است — نیاز به migration دیتابیس یا بررسی build log
