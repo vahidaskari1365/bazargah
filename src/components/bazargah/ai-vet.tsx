@@ -61,7 +61,7 @@ export function AIVetView() {
   if (!checked) return <PageShell image="/images/vet.jpg" />
 
   return (
-    <PageShell image="/images/vet.jpg" className="flex flex-col h-dvh">
+    <PageShell image="/images/vet.jpg" className="flex flex-col h-dvh lg:h-[calc(100dvh-4rem)]">
       <PageHeader
         title="AI دامپزشک بازارگاه"
         subtitle={usage ? `باقیمانده امروز: ${usage.remaining} از ${usage.limit}` : 'پاسخ آموزشی فوری ۲۴ ساعته'}
@@ -137,7 +137,7 @@ export function AIVetView() {
       </div>
 
       {/* نوار ورودی */}
-      <div className="fixed bottom-[70px] inset-x-0 z-40 px-4 pb-2">
+      <div className="fixed bottom-[70px] lg:bottom-4 inset-x-0 z-40 px-4 pb-2">
         <div className="max-w-3xl mx-auto">
           {limitReached && (
             <div className="glass-card rounded-2xl p-3 mb-2 flex items-center gap-3 bg-amber-50/90">

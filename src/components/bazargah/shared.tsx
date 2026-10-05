@@ -39,10 +39,10 @@ export function PageHeader({
 }) {
   return (
     <header
-      className={`${transparent ? '' : 'hero-header'} sticky top-0 z-40 text-white`}
+      className={`${transparent ? '' : 'hero-header'} sticky top-0 lg:top-16 z-40 text-white`}
       style={image ? ({ '--bg-image': `url(${image})` } as React.CSSProperties) : undefined}
     >
-      <div className="relative z-10 flex items-center gap-3 px-4 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3">
+      <div className="relative z-10 flex items-center gap-3 px-4 lg:px-8 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3 max-w-7xl mx-auto">
         <button
           onClick={() => useStore.getState().back()}
           aria-label="بازگشت"
@@ -147,7 +147,7 @@ export function AdCard({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
-      className="glass-card rounded-3xl p-4 flex gap-4 items-stretch cursor-pointer hover:shadow-xl transition-all animate-fade-up"
+      className="glass-card rounded-3xl p-4 flex gap-4 md:flex-col-reverse items-stretch cursor-pointer hover:shadow-xl transition-all animate-fade-up"
     >
       {/* متن */}
       <div className="flex-1 min-w-0 flex flex-col">
@@ -184,7 +184,7 @@ export function AdCard({
       </div>
 
       {/* تصویر */}
-      <div className="relative w-32 sm:w-40 shrink-0 rounded-2xl overflow-hidden bg-green-100">
+      <div className="relative w-32 sm:w-40 md:w-full md:h-44 shrink-0 rounded-2xl overflow-hidden bg-green-100">
         {images[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={images[0]} alt={ad.title} className="w-full h-full object-cover" loading="lazy" />

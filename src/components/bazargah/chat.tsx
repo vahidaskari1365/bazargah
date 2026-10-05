@@ -31,7 +31,7 @@ export function ChatListView() {
   return (
     <PageShell image="/images/farm.jpg">
       <PageHeader title="گفتگوها" subtitle="چت با خریداران و فروشندگان" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-4xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : conversations.length === 0 ? (
           <EmptyState
             icon="💬"
@@ -125,7 +125,7 @@ export function ChatDetailView({ id }: { id: string }) {
   if (!checked) return <PageShell image="/images/farm.jpg" />
 
   return (
-    <PageShell image="/images/farm.jpg" className="flex flex-col h-dvh">
+    <PageShell image="/images/farm.jpg" className="flex flex-col h-dvh lg:h-[calc(100dvh-4rem)]">
       <PageHeader title="گفتگو" subtitle="پیام‌ها رمزنگاری‌شده ذخیره می‌شوند" />
       <div className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-4 py-4 pb-28">
         {loading ? <LoadingView /> : (
@@ -159,7 +159,7 @@ export function ChatDetailView({ id }: { id: string }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="fixed bottom-[70px] inset-x-0 z-40 px-4">
+      <div className="fixed bottom-[70px] lg:bottom-4 inset-x-0 z-40 px-4">
         <div className="max-w-3xl mx-auto glass-card rounded-full p-1.5 flex items-center gap-2 shadow-lg">
           <input
             value={input}

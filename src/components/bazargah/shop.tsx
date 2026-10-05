@@ -29,12 +29,12 @@ export function StoresView() {
   return (
     <PageShell image="/images/feed.jpg">
       <PageHeader title="فروشگاه‌ها" subtitle="خوراک، تجهیزات و لوازم حیوانات" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         <Button onClick={() => navigate('cart')} variant="outline" className="w-full h-11 rounded-2xl bg-white/80 mt-4 gap-2 font-bold">
           <ShoppingCart className="w-4 h-4" /> مشاهده سبد خرید و ثبت سفارش
         </Button>
         {loading ? <LoadingView /> : (
-          <div className="space-y-4 mt-4">
+          <div className="grid lg:grid-cols-2 gap-4 mt-4">
             {stores.map((s) => (
               <div key={s.id} className="glass-card rounded-3xl p-5 animate-fade-up">
                 <div className="flex items-center gap-3">
@@ -149,7 +149,7 @@ export function CartView() {
   return (
     <PageShell image="/images/feed.jpg">
       <PageHeader title="سبد خرید" subtitle={`${items.length} قلم کالا`} />
-      <div className="max-w-lg mx-auto px-4 pb-28">
+      <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : items.length === 0 ? (
           <EmptyState icon="🛒" title="سبد خرید خالی است" description="از فروشگاه‌ها کالا اضافه کنید" action={<Button onClick={() => navigate('stores')} className="rounded-2xl bg-green-700">فروشگاه‌ها</Button>} />
         ) : (
@@ -213,7 +213,7 @@ export function OrdersView() {
   return (
     <PageShell image="/images/feed.jpg">
       <PageHeader title="سفارش‌های من" />
-      <div className="max-w-lg mx-auto px-4 pb-28">
+      <div className="max-w-lg lg:max-w-4xl mx-auto px-4 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : orders.length === 0 ? (
           <EmptyState icon="📦" title="سفارشی ثبت نشده" />
         ) : (

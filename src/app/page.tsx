@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { BottomNav } from '@/components/bazargah/bottom-nav'
+import { TopNav } from '@/components/bazargah/top-nav'
 import { HomeView } from '@/components/bazargah/home'
 import { AuthView } from '@/components/bazargah/auth'
 import { AdDetailView } from '@/components/bazargah/ad-detail'
@@ -74,9 +75,11 @@ function CurrentView() {
 
 export default function BazargahApp() {
   const [splash, setSplash] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
-  // ثبت Service Worker برای PWA
+  // ثبت Service Worker برای PWA + جلوگیری از خطای Hydration (خواندن localStorage فقط سمت کلاینت)
   useEffect(() => {
+    setMounted(true)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {})
     }
@@ -84,9 +87,14 @@ export default function BazargahApp() {
 
   return (
     <main className="min-h-dvh">
-      {splash && <Splash onDone={() => setSplash(false)} />}
-      <CurrentView />
-      <BottomNav />
+      {mounted && (
+        <>
+          {splash && <Splash onDone={() => setSplash(false)} />}
+          <TopNav />
+          <CurrentView />
+          <BottomNav />
+        </>
+      )}
     </main>
   )
 }

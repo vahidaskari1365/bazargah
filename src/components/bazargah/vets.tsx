@@ -30,11 +30,11 @@ export function VetsView() {
   return (
     <PageShell image="/images/vet.jpg">
       <PageHeader title="دامپزشکان" subtitle="متخصصان تأییدشده بازارگاه" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : vets.length === 0 ? (
           <EmptyState icon="🩺" title="دامپزشکی یافت نشد" />
         ) : (
-          <div className="space-y-3 mt-4">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
             {vets.map((v) => (
               <div key={v.id} className="glass-card rounded-3xl p-4 animate-fade-up">
                 <div className="flex items-center gap-4">

@@ -62,7 +62,7 @@ export function AdminView() {
     <PageShell image="/images/farm.jpg">
       <PageHeader title="پنل مدیریت بازارگاه" subtitle="داشبورد کامل ادمین" />
 
-      <div className="max-w-4xl mx-auto px-4 pb-28">
+      <div className="max-w-4xl lg:max-w-6xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         <Tabs defaultValue="stats" className="mt-4">
           <TabsList className="w-full grid grid-cols-4 h-11">
             <TabsTrigger value="stats" className="text-[12px] gap-1"><Eye className="w-3.5 h-3.5" /> آمار</TabsTrigger>

@@ -108,7 +108,7 @@ export function NutritionView() {
     <PageShell image="/images/feed.jpg">
       <PageHeader title="تغذیه هوشمند" subtitle="موتور علمی محاسبه جیره + توضیح AI" />
 
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-4xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {/* فرم ورودی */}
         <div className="glass-card rounded-3xl p-5 mt-4 animate-fade-up">
           <div className="flex items-center gap-2 mb-4">

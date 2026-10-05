@@ -85,7 +85,7 @@ export function AdDetailView({ id }: { id: string }) {
     <PageShell image="/images/farm.jpg">
       <PageHeader title={String(ad.title)} subtitle={category?.name} />
 
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-4xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {/* گالری */}
         <div className="glass-card rounded-3xl overflow-hidden mt-4 animate-fade-up">
           <div className="relative h-64 sm:h-80 bg-green-100">

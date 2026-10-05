@@ -77,7 +77,7 @@ export function CreateAdView() {
     <PageShell image="/images/farm.jpg">
       <PageHeader title="ثبت آگهی جدید" subtitle={`مرحله ${step} از 4`} />
 
-      <div className="max-w-lg mx-auto px-4 pb-28">
+      <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pb-28 lg:pb-12">
         {/* Stepper */}
         <div className="flex items-center gap-1 mt-4 mb-6">
           {steps.map((s, i) => (

@@ -121,8 +121,8 @@ export function HomeView() {
     <PageShell image="/images/farm.jpg">
       {/* هدر جستجو */}
       <div className="hero-header text-white px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8 rounded-b-[2rem]">
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
+        <div className="relative z-10 max-w-3xl lg:max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-4 lg:hidden">
             <div className="flex items-center gap-2">
               <span className="text-2xl">🌿</span>
               <div>
@@ -168,7 +168,7 @@ export function HomeView() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 -mt-4 pb-28">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto px-4 lg:px-8 -mt-4 pb-28 lg:pb-12">
         {/* میانبرها */}
         <div className="glass-card rounded-3xl p-3 mb-4 animate-fade-up">
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
@@ -324,7 +324,7 @@ export function HomeView() {
             description="فیلترها را تغییر دهید یا جستجوی جدیدی امتحان کنید"
           />
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {ads.map((ad) => (
               <AdCard key={ad.id} ad={ad} onOpen={() => navigate('ad-detail', { id: ad.id })} />
             ))}

@@ -27,7 +27,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="ناوبری اصلی"
-      className="fixed bottom-0 inset-x-0 z-50 glass-card border-t border-white/50 dark:border-gray-800 safe-bottom"
+      className="fixed bottom-0 inset-x-0 z-50 glass-card border-t border-white/50 dark:border-gray-800 safe-bottom lg:hidden"
     >
       <div className="max-w-3xl mx-auto flex items-center justify-around px-2 pt-1.5 pb-1">
         {items.map((item) => {

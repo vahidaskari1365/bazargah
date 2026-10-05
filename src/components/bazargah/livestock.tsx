@@ -48,7 +48,7 @@ export function HerdsView() {
   return (
     <PageShell image="/images/cow.jpg">
       <PageHeader title="مدیریت گله" subtitle="گروه‌بندی و مدیریت دام‌ها" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         <Button onClick={() => setAddOpen(true)} className="w-full h-12 rounded-2xl bg-green-700 hover:bg-green-800 mt-4 font-bold gap-2">
           <Plus className="w-5 h-5" /> ایجاد گله جدید
         </Button>
@@ -56,7 +56,7 @@ export function HerdsView() {
         {loading ? <LoadingView /> : herds.length === 0 ? (
           <EmptyState icon="🐄" title="گله‌ای ندارید" description="برای مدیریت جمعی دام‌ها گله بسازید" />
         ) : (
-          <div className="grid sm:grid-cols-2 gap-3 mt-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
             {herds.map((h) => {
               const herdAnimals = animals.filter(a => a.species === h.species)
               return (
@@ -135,7 +135,7 @@ export function ExpensesView() {
   return (
     <PageShell image="/images/cow.jpg">
       <PageHeader title="هزینه و سودآوری" subtitle="تحلیل هزینه‌های دامداری" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-4xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         <div className="grid grid-cols-2 gap-3 mt-4">
           <StatCard icon="💸" label="کل هزینه‌ها" value={faNum(total.toLocaleString('en-US')) + ' ت'} />
           <StatCard icon="📊" label="تعداد تراکنش" value={expenses.length} />

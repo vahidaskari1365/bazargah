@@ -54,7 +54,7 @@ export function ProfileView() {
     <PageShell image="/images/farm.jpg">
       <PageHeader title="پروفایل" />
 
-      <div className="max-w-lg mx-auto px-4 pb-28">
+      <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pb-28 lg:pb-12">
         {/* کارت کاربر */}
         <div className="glass-card rounded-3xl p-5 mt-4 animate-fade-up">
           <div className="flex items-center gap-4">
@@ -160,7 +160,7 @@ export function WalletView() {
   return (
     <PageShell image="/images/farm.jpg">
       <PageHeader title="کیف پول" />
-      <div className="max-w-lg mx-auto px-4 pb-28">
+      <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pb-28 lg:pb-12">
         <div className="hero-header rounded-3xl p-6 mt-4 text-white text-center animate-fade-up">
           <div className="relative z-10">
             <div className="text-[12px] text-green-200/80">موجودی فعلی</div>
@@ -257,7 +257,7 @@ export function SubscriptionView() {
   return (
     <PageShell image="/images/farm.jpg">
       <PageHeader title="اشتراک بازارگاه" subtitle="پلن فعلی: رایگان — ارتقا بدهید" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         <div className="grid sm:grid-cols-2 gap-3 mt-4">
           {plans.map((p) => {
             const features = JSON.parse(p.features || '[]') as string[]
@@ -314,7 +314,7 @@ export function NotificationsView() {
   return (
     <PageShell image="/images/farm.jpg">
       <PageHeader title="اعلان‌ها" />
-      <div className="max-w-lg mx-auto px-4 pb-28">
+      <div className="max-w-lg lg:max-w-3xl mx-auto px-4 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : notifications.length === 0 ? (
           <EmptyState icon="🔔" title="اعلانی ندارید" />
         ) : (
@@ -353,11 +353,11 @@ export function FavoritesView() {
   return (
     <PageShell image="/images/farm.jpg">
       <PageHeader title="علاقه‌مندی‌ها" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : favorites.length === 0 ? (
           <EmptyState icon="❤️" title="لیست خالی است" description="آگهی‌های موردعلاقه را با زدن قلب ذخیره کنید" />
         ) : (
-          <div className="space-y-3 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
             {favorites.map((f) => (
               <AdCard key={f.id} ad={f.ad as never} favorited onOpen={() => navigate('ad-detail', { id: f.adId })} />
             ))}
@@ -388,11 +388,11 @@ export function MyAdsView() {
   return (
     <PageShell image="/images/farm.jpg">
       <PageHeader title="آگهی‌های من" />
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : ads.length === 0 ? (
           <EmptyState icon="📋" title="آگهی‌ای ندارید" action={<Button onClick={() => navigate('create-ad')} className="rounded-2xl bg-green-700">ثبت آگهی</Button>} />
         ) : (
-          <div className="space-y-3 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
             {ads.map((ad) => (
               <AdCard key={String(ad.id)} ad={ad as never} onOpen={() => navigate('ad-detail', { id: String(ad.id) })} />
             ))}

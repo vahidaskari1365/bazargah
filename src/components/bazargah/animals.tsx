@@ -77,7 +77,7 @@ export function AnimalsView() {
     <PageShell image="/images/cow.jpg">
       <PageHeader title="حیوانات من" subtitle="پرونده دیجیتال سلامت هر حیوان" />
 
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {loading ? <LoadingView /> : animals.length === 0 ? (
           <EmptyState
             icon="🐾"
@@ -98,7 +98,7 @@ export function AnimalsView() {
               <StatCard icon="⚖️" label="میانگین وزن" value={animals.filter(a => a.weight).length ? Math.round(animals.reduce((s, a) => s + (a.weight || 0), 0) / animals.filter(a => a.weight).length) : '—'} />
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-3 mt-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
               {animals.map((a) => (
                 <div
                   key={a.id}
@@ -287,7 +287,7 @@ export function AnimalDetailView({ id }: { id: string }) {
     <PageShell image="/images/cow.jpg">
       <PageHeader title={animal.name} subtitle={`${SPECIES_FA[animal.species]} • Animal ID: ${animal.publicId}`} />
 
-      <div className="max-w-3xl mx-auto px-4 pb-28">
+      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 lg:px-8 pb-28 lg:pb-12">
         {/* کارت شناسنامه */}
         <div className="glass-card rounded-3xl p-5 mt-4 animate-fade-up">
           <div className="flex items-center gap-4">
