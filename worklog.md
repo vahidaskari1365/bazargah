@@ -127,3 +127,22 @@ Work Log:
 Stage Summary:
 - نوارهای سبز toast دیگر هیچ‌وقت روی محتوای بالای صفحه نمی‌افتند
 - مشاهده جانبی: PageHeader به‌خاطر position:relative در .hero-header عملاً sticky نیست (با اسکرول می‌رود) — اگر بعداً هدر چسبان خواسته شود باید .sticky-bar جدا تعریف شود
+
+---
+Task ID: green-bar-final-fix
+Agent: Super Z (main)
+Task: رفع قطعی «نوار سبز که روی مطالب میفتد» (شکایت مجدد کاربر بعد از فیکس toast)
+
+Work Log:
+- بازتولید در مرورگر (موبایل 390x844 + دسکتاپ 1440x900): toast قبلاً به پایین منتقل شده بود ولی هنوز تمام-عرض و pointer-events:auto بود → کارت/دکمه زیرش را می‌پوشاند و کلیک را می‌بلعید
+- ریشه اصلی کشف‌شده (دسکتاپ): PageHeader/ai-vet/chat همه «sticky top-0 lg:top-16» داشتند؛ CSS unlayered ‏.hero-header با position:relative روی sticky پیروزی می‌کرد → sticky مرده + ‏top-16 باعث شیفت بصری ۶۴px هدر سبز به پایین و افتادن روی اولین ردیف محتوای هر صفحه در دسکتاپ (دقیقاً «نوار سبز روی مطالب»)
+- باگ دوم (دسکتاپ چت): .page-bg با min-height:100dvh ارتفاع lg:h-[calc(100dvh-4rem)] را باطل می‌کرد → شل ۹۰۰px، پنجره ۶۴px اسکرول، هدر سبز زیر TopNav مخفی می‌شد (scrollIntoView هم عامل)
+- فیکس‌ها: (۱) حذف sticky/top از هر ۳ هدر → relative z-40 (۲) کلاس جدید .page-bg.chat-shell با min-height:0 + overflow:hidden برای شل چت‌ها (۳) TopNav دقیقاً h-16 (۴) toast → قرص کوچک w-auto rounded-full، pointer-events-none، مدت ۲.۶s، slide ملایم (۵) padding اسکرول چت‌ها pb-52/pb-44 و نوار ورودی bottom-[calc(64px+env(safe-area-inset-bottom))] کامل بالای BottomNav
+- کشف جانبی: dev server کد CSS را کش کرده بود — touch/restart لازم شد
+- تست مرورگر: دسکتاپ چت gap=0 زیر ناوبری، winScroll=0 بعد از ارسال پیام؛ موبایل AI-vet کارت‌ها کامل زیر نوار ورودی پاک می‌شوند؛ toast قرص ۲۲۳×۴۶ و elementFromPoint دکمه زیرین را برمی‌گرداند (click-through ✓)
+- bunx tsc --noEmit ✅ (با heap 4GB) + bun run build ✅ + commit 2683f20 + push
+
+Stage Summary:
+- «نوار سبز روی مطالب» در هر دو تفسیر (toast سبزِ پهن + هدر سبزِ شیفت‌شده دسکتاپ) ریشه‌ای رفع شد
+- toast دیگر هیچ‌وقت کلیک را نبلاک می‌کند و ۲.۶ ثانیه‌ای محو می‌شود
+- نکته برای آینده: CSS سفارشی unlayered در globals.css روی utilities تیلویند پیروزی می‌کند — قواعد position/height در کلاس‌های ترکیبی با احتیاط
