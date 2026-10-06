@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PageHeader, PageShell, useRequireAuth } from '@/components/bazargah/shared'
 import { useStore } from '@/lib/store'
-import { api, PROVINCES } from '@/lib/api'
+import { api, faNum, PROVINCES } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 interface Category { id: string; slug: string; name: string; type: string; attributes: string }
@@ -29,6 +29,28 @@ export function CreateAdView() {
   const [image, setImage] = useState('/images/cow.jpg')
   const [submitting, setSubmitting] = useState(false)
 
+  /** هر تغییر مرحله از بالای صفحه شروع شود — کاربر در صفحه جدید گم نشود */
+  function goStep(n: number) {
+    setStep(n)
+    window.scrollTo(0, 0)
+  }
+
+  /** قیمت عددی معتبر (بزرگ‌تر از صفر) */
+  const numericPrice = parseInt(form.price.replace(/[^\d]/g, ''), 10) || 0
+
+  /** اعتبارسنجی مرحله ۲ — کاربر تا انتشار پیش نرود و بعد خطا بگیرد */
+  function validateStep2(): boolean {
+    if (!form.title.trim()) {
+      toast({ title: 'عنوان آگهی را وارد کنید', variant: 'destructive' })
+      return false
+    }
+    if (numericPrice <= 0) {
+      toast({ title: 'قیمت معتبر وارد کنید', description: 'قیمت باید بزرگ‌تر از صفر باشد', variant: 'destructive' })
+      return false
+    }
+    return true
+  }
+
   useEffect(() => {
     api('/api/categories').then(res => setCategories(res.categories)).catch(() => {})
   }, [])
@@ -38,6 +60,10 @@ export function CreateAdView() {
   async function submit() {
     if (!form.title || !form.price || !form.categoryId) {
       toast({ title: 'عنوان، دسته و قیمت الزامی است', variant: 'destructive' })
+      return
+    }
+    if (numericPrice <= 0) {
+      toast({ title: 'قیمت معتبر وارد کنید', variant: 'destructive' })
       return
     }
     setSubmitting(true)
@@ -52,7 +78,7 @@ export function CreateAdView() {
         body: JSON.stringify({
           title: form.title,
           description: form.description,
-          price: form.price.replace(/[^\d]/g, ''),
+          price: String(numericPrice),
           categoryId: form.categoryId,
           province: form.province,
           city: form.city,
@@ -61,7 +87,14 @@ export function CreateAdView() {
           attributes: attrs,
         }),
       })
-      toast({ title: 'آگهی منتشر شد! 🎉', description: 'پس از تأیید کارشناسان نمایش داده می‌شود' })
+      toast({ title: 'آگهی منتشر شد! 🎉', description: 'آگهی شما در دسترس خریداران قرار گرفت' })
+      // پاک‌سازی فرم برای ثبت آگهی بعدی
+      setForm(f => ({
+        ...f, categoryId: '', title: '', description: '', price: '',
+        negotiable: false, breed: '', age: '', weight: '', gender: '',
+      }))
+      setImage('/images/cow.jpg')
+      setStep(1)
       navigate('ad-detail', { id: res.ad.id })
     } catch (e) {
       toast({ title: (e as Error).message, variant: 'destructive' })
@@ -110,7 +143,7 @@ export function CreateAdView() {
             </div>
             <Button
               disabled={!form.categoryId}
-              onClick={() => setStep(2)}
+              onClick={() => goStep(2)}
               className="w-full h-12 rounded-2xl bg-green-700 hover:bg-green-800 mt-5 font-bold"
             >
               مرحله بعد
@@ -196,8 +229,8 @@ export function CreateAdView() {
               <Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="توضیحات کامل آگهی، وضعیت سلامت، سابقه و..." rows={4} className="rounded-2xl" />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(1)} className="h-12 rounded-2xl">بازگشت</Button>
-              <Button onClick={() => setStep(3)} className="flex-1 h-12 rounded-2xl bg-green-700 hover:bg-green-800 font-bold">مرحله بعد</Button>
+              <Button variant="outline" onClick={() => goStep(1)} className="h-12 rounded-2xl">بازگشت</Button>
+              <Button onClick={() => { if (validateStep2()) goStep(3) }} className="flex-1 h-12 rounded-2xl bg-green-700 hover:bg-green-800 font-bold">مرحله بعد</Button>
             </div>
           </div>
         )}
@@ -225,8 +258,8 @@ export function CreateAdView() {
               <img src={image} alt="پیش‌نمایش" className="w-full h-full object-cover" />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(2)} className="h-12 rounded-2xl">بازگشت</Button>
-              <Button onClick={() => setStep(4)} className="flex-1 h-12 rounded-2xl bg-green-700 hover:bg-green-800 font-bold">مرحله بعد</Button>
+              <Button variant="outline" onClick={() => goStep(2)} className="h-12 rounded-2xl">بازگشت</Button>
+              <Button onClick={() => goStep(4)} className="flex-1 h-12 rounded-2xl bg-green-700 hover:bg-green-800 font-bold">مرحله بعد</Button>
             </div>
           </div>
         )}
@@ -239,16 +272,16 @@ export function CreateAdView() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={image} alt={form.title} className="w-full h-40 object-cover" />
               <div className="p-4">
-                <div className="font-bold">{form.title}</div>
-                <div className="text-green-700 font-extrabold mt-1">{form.price || 0} تومان</div>
+                <div className="font-bold">{form.title || 'بدون عنوان'}</div>
+                <div className="text-green-700 font-extrabold mt-1">{faNum(numericPrice.toLocaleString('en-US'))} تومان</div>
                 <div className="text-xs text-gray-500 mt-1">{form.city}، {form.province}</div>
               </div>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-[12px] text-amber-800 leading-relaxed mb-4">
-              ⏱ مدت استاندارد نمایش: ۳۰ روز • امکان تمدید و نردبان از بخش «آگهی‌های من» • آگهی پس از تأیید کارشناس منتشر می‌شود
+              ⏱ مدت استاندارد نمایش: ۳۰ روز • امکان تمدید و نردبان از بخش «آگهی‌های من»
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(3)} className="h-12 rounded-2xl">بازگشت</Button>
+              <Button variant="outline" onClick={() => goStep(3)} className="h-12 rounded-2xl">بازگشت</Button>
               <Button onClick={submit} disabled={submitting} className="flex-1 h-12 rounded-2xl bg-green-700 hover:bg-green-800 font-bold">
                 {submitting ? 'در حال انتشار...' : 'انتشار آگهی'}
               </Button>

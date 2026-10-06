@@ -77,8 +77,10 @@ export async function POST(req: Request) {
   if (!user) return unauthorized()
   try {
     const body = await req.json()
-    if (!body.title || !body.categoryId || !body.price === undefined) {
-      return Response.json({ error: 'عنوان، دسته و قیمت الزامی است' }, { status: 400 })
+    // قیمت باید عدد معتبر بزرگ‌تر از صفر باشد (پیش‌تر شرط `!body.price === undefined` همیشه false بود)
+    const parsedPrice = parseInt(body.price, 10)
+    if (!body.title || !body.categoryId || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      return Response.json({ error: 'عنوان، دسته و قیمت معتبر الزامی است' }, { status: 400 })
     }
 
     // محدودیت آگهی فعال بر اساس پلن

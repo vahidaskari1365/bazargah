@@ -6,6 +6,7 @@ import { enableDemoMode, GUEST_USER } from '@/lib/demo-data'
 import { BottomNav } from '@/components/bazargah/bottom-nav'
 import { TopNav } from '@/components/bazargah/top-nav'
 import { HomeView } from '@/components/bazargah/home'
+import { SearchView } from '@/components/bazargah/search'
 import { AuthView } from '@/components/bazargah/auth'
 import { AdDetailView } from '@/components/bazargah/ad-detail'
 import { CreateAdView } from '@/components/bazargah/create-ad'
@@ -69,7 +70,7 @@ function CurrentView() {
     case 'herds': return <HerdsView />
     case 'expenses': return <ExpensesView />
     case 'admin': return <AdminView />
-    case 'search': return <HomeView />
+    case 'search': return <SearchView />
     default: return <HomeView />
   }
 }
