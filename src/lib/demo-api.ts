@@ -108,7 +108,17 @@ export async function demoFetch(path: string, method = 'GET', bodyRaw?: string):
     const status = q.get('status') || 'ACTIVE'
 
     let list = allAds()
-    if (qq) list = list.filter((a) => String(a.title).includes(qq) || String(a.description || '').includes(qq))
+    if (qq) {
+      // جستجوی واژه‌محور (هماهنگ با /api/ads): واژه‌های عمومی و اعداد حذف می‌شوند
+      const STOP = new Set(['از', 'به', 'تا', 'با', 'و', 'در', 'برای', 'زیر', 'بالا', 'بالای', 'تومان', 'میلیون', 'هزار', 'ریال', 'قیمت', 'خرید', 'فروش', 'دنبال', 'میخواهم', 'میخوام'])
+      const words = qq.split(/\s+/).filter((w) => w.length >= 2 && !/^[\d۰-۹./،,]+$/.test(w) && !STOP.has(w))
+      if (words.length > 0) {
+        list = list.filter((a) => {
+          const text = `${String(a.title)} ${String(a.description || '')}`
+          return words.every((w) => text.includes(w))
+        })
+      }
+    }
     if (category) list = list.filter((a) => a.categoryId === category || (a.category as { slug?: string } | undefined)?.slug === category)
     if (city) list = list.filter((a) => String(a.city).includes(city))
     if (minPrice) list = list.filter((a) => Number(a.price) >= parseInt(minPrice))

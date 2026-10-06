@@ -60,6 +60,22 @@ export async function api(path: string, options: RequestInit = {}) {
 export const faNum = (n: number | string | undefined | null) =>
   n === undefined || n === null ? '—' : String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[+d])
 
+/** تجزیه امن JSON — داده خرابِ سرور هرگز صفحه را سفید نمی‌کند */
+export function safeParse<T>(raw: unknown, fallback: T): T {
+  try {
+    const v = JSON.parse(typeof raw === 'string' ? raw : String(raw ?? ''))
+    return (v ?? fallback) as T
+  } catch {
+    return fallback
+  }
+}
+
+/** تجزیه امن فهرست تصاویر آگهی */
+export function safeParseImages(raw: unknown): string[] {
+  const arr = safeParse<unknown[]>(raw, [])
+  return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string' && x.length > 0) : []
+}
+
 export const faPrice = (n: number | undefined | null) =>
   n === undefined || n === null || isNaN(n) ? 'توافقی' : `${faNum(n.toLocaleString('en-US'))} تومان`
 

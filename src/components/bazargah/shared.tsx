@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { ChevronRight, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useStore } from '@/lib/store'
-import { api, faPrice, faNum } from '@/lib/api'
+import { api, faPrice, faNum, safeParseImages } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 /** هوک بررسی لاگین — با حالت مهمان: تا وقتی ورود خودکار مهمان انجام نشده صبر می‌کند */
@@ -89,6 +89,7 @@ export function AdCard({
   ad,
   favorited,
   onOpen,
+  onFavChange,
 }: {
   ad: {
     id: string
@@ -104,11 +105,13 @@ export function AdCard({
   }
   favorited?: boolean
   onOpen: () => void
+  /** بعد از تغییر وضعیت علاقه‌مندی صدا زده می‌شود (برای حذف زنده از لیست علاقه‌مندی‌ها) */
+  onFavChange?: (favorited: boolean) => void
 }) {
   const { token, navigate } = useStore()
   const [fav, setFav] = useState(!!favorited)
   const [busy, setBusy] = useState(false)
-  const images = JSON.parse(ad.images || '[]') as string[]
+  const images = safeParseImages(ad.images)
   const attrs = (() => {
     try {
       return JSON.parse(ad.attributes || '{}')
@@ -132,6 +135,7 @@ export function AdCard({
         body: JSON.stringify({ adId: ad.id }),
       })
       setFav(res.favorited)
+      onFavChange?.(res.favorited)
       toast({ title: res.favorited ? 'به علاقه‌مندی‌ها اضافه شد ❤️' : 'از علاقه‌مندی‌ها حذف شد' })
     } catch {
       toast({ title: 'خطا در ذخیره علاقه‌مندی', variant: 'destructive' })

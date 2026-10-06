@@ -365,8 +365,16 @@ export function FavoritesView() {
           <EmptyState icon="❤️" title="لیست خالی است" description="آگهی‌های موردعلاقه را با زدن قلب ذخیره کنید" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
-            {favorites.map((f) => (
-              <AdCard key={f.id} ad={f.ad as never} favorited onOpen={() => navigate('ad-detail', { id: f.adId })} />
+            {favorites.map((item) => (
+              <AdCard
+                key={item.id}
+                ad={item.ad as never}
+                favorited
+                onOpen={() => navigate('ad-detail', { id: item.adId })}
+                onFavChange={(fav) => {
+                  if (!fav) setFavorites((prev) => prev.filter((x) => x.adId !== item.adId))
+                }}
+              />
             ))}
           </div>
         )}

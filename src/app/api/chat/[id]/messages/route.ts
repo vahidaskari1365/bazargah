@@ -1,6 +1,24 @@
 import { db } from '@/lib/db'
 import { getUserFromRequest, unauthorized } from '@/lib/auth'
 
+/** پاسخ خودکار فروشنده در حالت آزمایشی — هماهنگ با لایه دمو تا فرآیند «چت با فروشنده» همیشه زنده بماند.
+ *  ⚠️ هنگام راه‌اندازی واقعی (فروشندگان واقعی آنلاین) باید غیرفعال شود. */
+const SELLER_AUTO_REPLIES: [RegExp, string][] = [
+  [/سلام|درود|وقت/, 'سلام 👋 وقت بخیر، در خدمتم.'],
+  [/قیمت|تخفیف|آخر|چند/, 'قیمت همونیه که تو آگهی گذاشتم، ولی برای خرید حضوری یکم تخفیف میدم 🙂'],
+  [/موجود|هست|آماده/, 'بله موجوده، هر وقت تشریف بیارید آماده‌ست.'],
+  [/دیدار|حضوری|ملاقات|آدرس/, 'هر روز از ساعت ۸ صبح تا ۸ شب در مزرعه هستم، آدرس توی آگهیه. 🐄'],
+  [/وزن|نژاد|سن|سند|شناسنامه/, 'جزئیات کامل توی آگهی هست؛ سند و شناسنامه هم کامل داره ✅'],
+]
+
+function sellerAutoReply(text: string): string {
+  const t = text || ''
+  for (const [re, reply] of SELLER_AUTO_REPLIES) {
+    if (re.test(t)) return reply
+  }
+  return 'چشم، هماهنگ می‌کنم و خبر میدم 🙏'
+}
+
 /** پیام‌های یک مکالمه (با polling سمت کلاینت برای realtime) */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getUserFromRequest(req)
@@ -72,7 +90,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       data: { userId: otherId, title: 'پیام جدید', body: content.trim().slice(0, 60), type: 'MESSAGE' },
     }).catch(() => {})
 
-    return Response.json({ message })
+    // پاسخ خودکار فروشنده (حالت آزمایشی): خریدار پیام داد → پاسخ فروشنده با تأخیر کوتاه ثبت می‌شود
+    // createdAt حدود ۲.۵ ثانیه در آینده تا با polling ۳ ثانیه‌ای طبیعی نمایش داده شود
+    let autoReply = null
+    if (conv.buyerId === user.id) {
+      try {
+        autoReply = await db.message.create({
+          data: {
+            conversationId: id,
+            senderId: conv.sellerId,
+            content: sellerAutoReply(content.trim()),
+            createdAt: new Date(Date.now() + 2500),
+          },
+        })
+        await db.notification.create({
+          data: { userId: conv.buyerId, title: 'پاسخ فروشنده', body: autoReply.content.slice(0, 60), type: 'MESSAGE' },
+        }).catch(() => {})
+      } catch { /* پاسخ خودکار حیاتی نیست */ }
+    }
+
+    return Response.json({ message, autoReply })
   } catch (e) {
     console.error('Messages POST error:', e)
     return Response.json({ error: 'خطا در ارسال پیام' }, { status: 500 })

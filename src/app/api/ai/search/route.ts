@@ -42,7 +42,8 @@ export async function POST(req: Request) {
   "attributes": {"breed": "نژاد یا خالی", "gender": "نر|ماده|خالی", "ageMax": "حداکثر سن ماه یا خالی", "weightMin": "حداقل وزن یا خالی"}
 }
 
-نکات: «میلیون» یعنی 1000000 تومان. «زیر X» یعنی maxPrice=X. «بالای X» یعنی minPrice=X. نام جانور را به دسته درست نگاشت کن (سگ/گربه→pets، مرغ→poultry، گاو→live-animal، گوسفند/بز→sheep-goat، اسب→horse، یونجه/خوراک→feed). فقط JSON برگردان.`,
+نکات: «میلیون» یعنی 1000000 تومان. «زیر X» یعنی maxPrice=X. «بالای X» یعنی minPrice=X. نام جانور را به دسته درست نگاشت کن (سگ/گربه→pets، مرغ→poultry، گاو→live-animal، گوسفند/بز→sheep-goat، اسب→horse، یونجه/خوراک→feed).
+قاعده q: فقط یک یا دو کلمه کلیدی کوتاه که واقعاً در عنوان آگهی هست (مثل: ژرمن، هلشتاین، یونجه، سیمنتال) یا رشته خالی — هرگز کل جمله کاربر، اعداد یا قیمت را در q ننویس. فقط JSON برگردان.`,
       },
       { role: 'user', content: query },
     ], 300)
@@ -56,8 +57,23 @@ export async function POST(req: Request) {
 
     // نرمال‌سازی
     const clean = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v)
+
+    /** اگر مدل کل جمله/اعداد را به‌عنوان کلیدواژه برگرداند، فقط واژه‌های معنادار نگه داشته می‌شود */
+    const cleanKeyword = (kw: string, original: string): string => {
+      const raw = (kw || '').trim()
+      const bad = !raw || raw.length > 24 || /[\d۰-۹]/.test(raw)
+      if (!bad) return raw
+      return (
+        original
+          .replace(/[\d۰-۹]+/g, ' ')
+          .replace(/(تومان|میلیون|هزار|ریال|زیر|بالا|بالای|از|تا|به|با|برای|قیمت|میخواهم|میخوام|بخرم|بخر|دنبال)/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+      )
+    }
+
     const result = {
-      q: clean(filters.q) || query,
+      q: cleanKeyword(clean(filters.q) || query, query),
       categorySlug: clean(filters.categorySlug),
       city: clean(filters.city),
       minPrice: clean(filters.minPrice) ? parseInt(filters.minPrice) : null,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Filter, Heart, MapPin, ArrowUpDown } from 'lucide-react'
+import { Search, Filter, Heart, MapPin, ArrowUpDown, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider'
 import { Input } from '@/components/ui/input'
 import { PageShell, AdCard, EmptyState, LoadingView } from '@/components/bazargah/shared'
 import { useStore } from '@/lib/store'
-import { api, faNum, CITIES } from '@/lib/api'
+import { api, faNum, safeParseImages, CITIES } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 interface Category { id: string; slug: string; name: string; icon: string; image?: string }
@@ -32,18 +32,16 @@ export function HomeView() {
   const [query, setQuery] = useState('')
   const [city, setCity] = useState('')
   const [category, setCategory] = useState('')
+  const [minPrice, setMinPrice] = useState(0)
   const [maxPrice, setMaxPrice] = useState(900000000)
   const [sort, setSort] = useState('NEWEST')
   const [smartSearching, setSmartSearching] = useState(false)
 
   useEffect(() => {
     load()
-  }, [])
-
-  useEffect(() => {
     loadAds()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, city, sort, maxPrice])
+  }, [])
 
   async function load() {
     try {
@@ -52,14 +50,22 @@ export function HomeView() {
     } catch { /* ignore */ }
   }
 
-  async function loadAds() {
+  /** بارگذاری آگهی‌ها با امکان override — بدون وابستگی به state تازه (رفع باگ رقابتی جستجوی هوشمند) */
+  async function loadAds(o?: { category?: string; city?: string; minPrice?: number; maxPrice?: number; sort?: string; q?: string }) {
+    const category_ = o?.category ?? category
+    const city_ = o?.city ?? city
+    const minPrice_ = o?.minPrice ?? minPrice
+    const maxPrice_ = o?.maxPrice ?? maxPrice
+    const sort_ = o?.sort ?? sort
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (category) params.set('category', category)
-      if (city) params.set('city', city)
-      if (maxPrice < 900000000) params.set('maxPrice', String(maxPrice))
-      if (sort !== 'NEWEST') params.set('sort', sort)
+      if (o?.q) params.set('q', o.q)
+      if (category_) params.set('category', category_)
+      if (city_) params.set('city', city_)
+      if (minPrice_ > 0) params.set('minPrice', String(minPrice_))
+      if (maxPrice_ < 900000000) params.set('maxPrice', String(maxPrice_))
+      if (sort_ !== 'NEWEST') params.set('sort', sort_)
       const res = await api(`/api/ads?${params}`)
       setAds(res.ads)
       setFeatured(res.ads.filter((a: Ad) => a.isFeatured).slice(0, 4))
@@ -78,27 +84,23 @@ export function HomeView() {
         method: 'POST',
         body: JSON.stringify({ query }),
       })
-      const f = res.filters
-      // اعمال فیلترها
-      setCity(f.city || '')
-      if (f.categorySlug) {
-        const cat = categories.find(c => c.slug === f.categorySlug)
-        setCategory(cat?.id || '')
+      const f = res.filters || {}
+      const cat = f.categorySlug ? categories.find(c => c.slug === f.categorySlug) : null
+      const next = {
+        q: f.q || '',
+        city: f.city || '',
+        category: cat?.id || '',
+        minPrice: f.minPrice ? Number(f.minPrice) : 0,
+        maxPrice: f.maxPrice ? Number(f.maxPrice) : 900000000,
+        sort: 'NEWEST' as const,
       }
-      if (f.maxPrice) setMaxPrice(f.maxPrice)
-      if (f.minPrice) setMaxPrice(900000000)
+      setCity(next.city)
+      setCategory(next.category)
+      setMinPrice(next.minPrice)
+      setMaxPrice(next.maxPrice)
       setSort('NEWEST')
-      // جستجوی نهایی با q
-      const params = new URLSearchParams()
-      if (f.q) params.set('q', f.q)
-      if (f.categorySlug) {
-        const cat = categories.find(c => c.slug === f.categorySlug)
-        if (cat) params.set('category', cat.id)
-      }
-      if (f.city) params.set('city', f.city)
-      if (f.maxPrice) params.set('maxPrice', String(f.maxPrice))
-      const adsRes = await api(`/api/ads?${params}`)
-      setAds(adsRes.ads)
+      // فقط یک fetch — بدون مسابقه با effect (state فقط برای همگام‌سازی UI به‌روز می‌شود)
+      await loadAds(next)
       toast({ title: 'فیلترهای هوشمند اعمال شد ✨' })
     } catch {
       toast({ title: 'جستجوی هوشمند موقتاً در دسترس نیست', variant: 'destructive' })
@@ -180,6 +182,7 @@ export function HomeView() {
                   else if (s.cat) {
                     const cat = categories.find(c => c.slug === s.cat)
                     setCategory(cat?.id || '')
+                    loadAds({ category: cat?.id || '' })
                   }
                 }}
                 className="cat-chip flex flex-col items-center gap-1.5 py-3 rounded-2xl hover:bg-green-50"
@@ -196,7 +199,7 @@ export function HomeView() {
           <h2 className="font-bold text-green-950 dark:text-green-100 mb-3 text-sm">دسته‌بندی‌ها</h2>
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
             <button
-              onClick={() => setCategory('')}
+              onClick={() => { setCategory(''); loadAds({ category: '' }) }}
               className={`cat-chip shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium ${!category ? 'bg-green-800 text-white shadow-md' : 'bg-green-50 text-green-900 dark:bg-green-900/40 dark:text-green-100'}`}
             >
               همه
@@ -204,7 +207,7 @@ export function HomeView() {
             {categories.map((c) => (
               <button
                 key={c.id}
-                onClick={() => setCategory(c.id)}
+                onClick={() => { setCategory(c.id); loadAds({ category: c.id }) }}
                 className={`cat-chip shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium ${category === c.id ? 'bg-green-800 text-white shadow-md' : 'bg-green-50 text-green-900 dark:bg-green-900/40 dark:text-green-100'}`}
               >
                 <span>{CAT_ICONS[c.slug] || '📋'}</span>
@@ -229,7 +232,7 @@ export function HomeView() {
                 >
                   <div className="relative h-32">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={JSON.parse(ad.images)[0] || '/images/cow.jpg'} alt={ad.title} className="w-full h-full object-cover" />
+                    <img src={safeParseImages(ad.images)[0] || '/images/cow.jpg'} alt={ad.title} className="w-full h-full object-cover" />
                     <span className="absolute top-2 right-2 bg-amber-400 text-amber-950 text-[10px] font-bold px-2 py-0.5 rounded-full">ویژه</span>
                   </div>
                   <div className="p-3">
@@ -263,7 +266,7 @@ export function HomeView() {
               <div className="space-y-5 pb-6">
                 <div>
                   <label className="text-sm font-medium mb-2 block">شهر</label>
-                  <Select value={city || 'all'} onValueChange={(v) => setCity(v === 'all' ? '' : v)}>
+                  <Select value={city || 'all'} onValueChange={(v) => { const c = v === 'all' ? '' : v; setCity(c); loadAds({ city: c }) }}>
                     <SelectTrigger><SelectValue placeholder="همه شهرها" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">همه شهرها</SelectItem>
@@ -285,6 +288,17 @@ export function HomeView() {
                     step={1000000}
                   />
                 </div>
+                {minPrice > 0 && (
+                  <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/30 rounded-xl px-3 py-2">
+                    <span className="text-[13px] text-green-900 dark:text-green-100">حداقل قیمت: {faNum(minPrice.toLocaleString('en-US'))} تومان</span>
+                    <button
+                      onClick={() => { setMinPrice(0); loadAds({ minPrice: 0 }) }}
+                      className="flex items-center gap-1 text-[12px] text-red-600 font-medium"
+                    >
+                      <X className="w-3.5 h-3.5" /> حذف
+                    </button>
+                  </div>
+                )}
                 <Button onClick={() => { loadAds(); }} className="w-full rounded-2xl bg-green-700 hover:bg-green-800">
                   اعمال فیلتر
                 </Button>
@@ -292,7 +306,7 @@ export function HomeView() {
             </SheetContent>
           </Sheet>
 
-          <Select value={sort} onValueChange={setSort}>
+          <Select value={sort} onValueChange={(v) => { setSort(v); loadAds({ sort: v }) }}>
             <SelectTrigger className="rounded-full bg-white/80 dark:bg-gray-900/70 h-9 w-[130px] text-[13px] shrink-0">
               <ArrowUpDown className="w-3.5 h-3.5" />
               <SelectValue />

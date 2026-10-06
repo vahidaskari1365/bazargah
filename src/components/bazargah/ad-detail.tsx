@@ -5,7 +5,7 @@ import { Heart, Share2, Flag, Phone, MessageCircle, MapPin, Eye, BadgeCheck } fr
 import { Button } from '@/components/ui/button'
 import { PageHeader, PageShell, LoadingView, AdCard } from '@/components/bazargah/shared'
 import { useStore } from '@/lib/store'
-import { api, faPrice, faNum, faDate, ATTR_LABEL_FA, attrValueFa } from '@/lib/api'
+import { api, faPrice, faNum, faDate, safeParse, safeParseImages, ATTR_LABEL_FA, attrValueFa } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
 export function AdDetailView({ id }: { id: string }) {
@@ -29,8 +29,8 @@ export function AdDetailView({ id }: { id: string }) {
       const res = await api(`/api/ads/${id}`)
       setAd(res.ad)
       setSimilar(res.similar || [])
-      setImages(JSON.parse((res.ad as Record<string, string>).images || '[]'))
-      setAttrs(JSON.parse((res.ad as Record<string, string>).attributes || '{}'))
+      setImages(safeParseImages((res.ad as Record<string, unknown>).images))
+      setAttrs(safeParse<Record<string, unknown>>((res.ad as Record<string, unknown>).attributes, {}))
       if (token) {
         const favRes = await api('/api/favorites')
         setFav(favRes.adIds?.includes(id) || false)
@@ -43,9 +43,13 @@ export function AdDetailView({ id }: { id: string }) {
 
   async function toggleFav() {
     if (!token) { navigate('auth'); return }
-    const res = await api('/api/favorites', { method: 'POST', body: JSON.stringify({ adId: id }) })
-    setFav(res.favorited)
-    toast({ title: res.favorited ? 'به علاقه‌مندی‌ها اضافه شد' : 'حذف شد' })
+    try {
+      const res = await api('/api/favorites', { method: 'POST', body: JSON.stringify({ adId: id }) })
+      setFav(res.favorited)
+      toast({ title: res.favorited ? 'به علاقه‌مندی‌ها اضافه شد ❤️' : 'از علاقه‌مندی‌ها حذف شد' })
+    } catch (e) {
+      toast({ title: (e as Error).message || 'خطا در ذخیره علاقه‌مندی', variant: 'destructive' })
+    }
   }
 
   async function startChat() {

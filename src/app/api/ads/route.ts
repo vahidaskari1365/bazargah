@@ -2,6 +2,23 @@ import { db } from '@/lib/db'
 import { getUserFromRequest, unauthorized } from '@/lib/auth'
 import { Prisma } from '@prisma/client'
 
+/** واژه‌های عمومی که در جستجوی متنی نباید شرط شوند (قیمت/جهت/حروف اضافه) */
+const SEARCH_STOP_WORDS = new Set([
+  'از', 'به', 'تا', 'با', 'و', 'در', 'برای', 'زیر', 'بالا', 'بالای',
+  'تومان', 'میلیون', 'هزار', 'ریال', 'قیمت', 'خرید', 'فروش', 'دنبال', 'میخواهم', 'میخوام',
+])
+
+/** جستجوی واژه‌محور: همه کلمات معنادار باید در عنوان/توضیح باشند — جمله کامل کاربر هم جواب می‌دهد */
+function buildTextFilter(q: string): Prisma.AdWhereInput[] {
+  const words = q.split(/\s+/).filter(
+    (w) => w.length >= 2 && !/^[\d۰-۹./،,]+$/.test(w) && !SEARCH_STOP_WORDS.has(w)
+  )
+  if (words.length === 0) return []
+  return words.map((w) => ({
+    OR: [{ title: { contains: w } }, { description: { contains: w } }],
+  }))
+}
+
 /** جستجو و فیلتر آگهی‌ها */
 export async function GET(req: Request) {
   try {
@@ -19,12 +36,8 @@ export async function GET(req: Request) {
     const status = searchParams.get('status') || 'ACTIVE'
 
     const where: Prisma.AdWhereInput = { status }
-    if (q) {
-      where.OR = [
-        { title: { contains: q } },
-        { description: { contains: q } },
-      ]
-    }
+    const textFilter = q ? buildTextFilter(q) : []
+    if (textFilter.length > 0) where.AND = textFilter
     if (categoryId) where.categoryId = categoryId
     if (city) where.city = { contains: city }
     if (minPrice) where.price = { ...where.price as Prisma.IntFilter, gte: parseInt(minPrice) }
