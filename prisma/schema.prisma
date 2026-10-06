@@ -49,6 +49,7 @@ model OTP {
   code      String
   expiresAt DateTime
   used      Boolean  @default(false)
+  attempts  Int      @default(0) // تعداد تلاش‌های ناموفق — بعد از ۵ بلاک می‌شود
   createdAt DateTime @default(now())
 
   @@index([phone])

@@ -14,6 +14,18 @@ export async function POST(req: Request) {
       orderBy: { createdAt: 'desc' },
     })
     if (!otp) {
+      // جلوگیری از brute force: اگر آخرین کدِ فعال این شماره بیش از ۵ بار اشتباه وارد شده، بلاک
+      const lastActive = await db.oTP.findFirst({
+        where: { phone, used: false, expiresAt: { gte: new Date() } },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (lastActive && lastActive.attempts >= 5) {
+        await db.oTP.update({ where: { id: lastActive.id }, data: { used: true } })
+        return Response.json({ error: 'تلاش‌های بیش از حد — کد جدید درخواست کنید' }, { status: 429 })
+      }
+      if (lastActive) {
+        await db.oTP.update({ where: { id: lastActive.id }, data: { attempts: { increment: 1 } } })
+      }
       return Response.json({ error: 'کد نامعتبر یا منقضی شده است' }, { status: 400 })
     }
     await db.oTP.update({ where: { id: otp.id }, data: { used: true } })

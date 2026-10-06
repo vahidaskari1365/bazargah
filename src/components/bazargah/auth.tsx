@@ -1,14 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { Phone, ShieldCheck, ChevronLeft } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Phone, ShieldCheck, ChevronLeft, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/components/ui/input-otp'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PageShell } from '@/components/bazargah/shared'
 import { useStore } from '@/lib/store'
-import { api } from '@/lib/api'
+import { api, faNum } from '@/lib/api'
 import { PROVINCES, CITIES } from '@/lib/api'
 import { toast } from '@/hooks/use-toast'
 
@@ -20,6 +20,22 @@ export function AuthView() {
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState({ firstName: '', lastName: '', province: '', city: '' })
   const [pendingUser, setPendingUser] = useState<Record<string, unknown> | null>(null)
+  const [demoCode, setDemoCode] = useState('')
+  const [resendIn, setResendIn] = useState(0)
+  const [expiresIn, setExpiresIn] = useState(0)
+
+  /** شمارنده ثانیه‌ای برای resend و انقضا — سبک و همیشه فعال */
+  useEffect(() => {
+    const t = setInterval(() => {
+      setResendIn(v => (v > 0 ? v - 1 : 0))
+      setExpiresIn(v => (v > 0 ? v - 1 : 0))
+    }, 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const mm = Math.floor(expiresIn / 60)
+  const ss = String(expiresIn % 60).padStart(2, '0')
+  const codeExpired = expiresIn === 0 && step === 'OTP'
 
   async function requestOTP() {
     if (!/^09\d{9}$/.test(phone)) {
@@ -33,9 +49,13 @@ export function AuthView() {
         body: JSON.stringify({ phone }),
       })
       setStep('OTP')
+      setCode('')
+      setDemoCode(res.demoCode || '')
+      setResendIn(60)
+      setExpiresIn(120)
       toast({
         title: 'کد تأیید ارسال شد',
-        description: `کد دمو: ${res.demoCode}`,
+        description: res.demoCode ? `کد دمو: ${res.demoCode}` : undefined,
       })
     } catch (e) {
       toast({ title: (e as Error).message, variant: 'destructive' })
@@ -133,8 +153,21 @@ export function AuthView() {
 
         {step === 'OTP' && (
           <div className="glass-card rounded-3xl p-6 space-y-5 animate-fade-up">
+            {/* کد آزمایشی — تا وقتی SMS واقعی وصل نشده، همیشه در صفحه دیده شود (نه فقط toast) */}
+            {demoCode && (
+              <div className={`rounded-2xl p-3 text-center border ${codeExpired ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' : 'bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-800'}`}>
+                {codeExpired ? (
+                  <div className="text-[13px] font-bold text-red-700 dark:text-red-300">کد منقضی شد — دوباره ارسال کنید</div>
+                ) : (
+                  <>
+                    <div className="text-[11px] text-gray-500 mb-1">کد آزمایشی (پیامک واقعی فعال نیست):</div>
+                    <div dir="ltr" className="text-2xl font-extrabold tracking-[0.35em] text-green-800 dark:text-green-300">{faNum(demoCode)}</div>
+                  </>
+                )}
+              </div>
+            )}
             <div dir="ltr" className="flex justify-center">
-              <InputOTP maxLength={5} value={code} onChange={setCode}>
+              <InputOTP maxLength={5} value={code} onChange={setCode} disabled={codeExpired}>
                 <InputOTPGroup>
                   <InputOTPSlot index={0} />
                   <InputOTPSlot index={1} />
@@ -144,20 +177,39 @@ export function AuthView() {
                 </InputOTPGroup>
               </InputOTP>
             </div>
+            {expiresIn > 0 && (
+              <div className="flex items-center justify-center gap-1.5 text-[12px] text-gray-500">
+                <Timer className="w-3.5 h-3.5" />
+                اعتبار کد: {faNum(String(mm))}:{faNum(ss)}
+              </div>
+            )}
             <Button
               onClick={verifyOTP}
-              disabled={loading}
+              disabled={loading || codeExpired}
               className="w-full h-12 rounded-2xl bg-green-700 hover:bg-green-800 text-base font-bold"
             >
               {loading ? 'در حال بررسی...' : 'تأیید و ورود'}
             </Button>
-            <button
-              onClick={() => { setStep('PHONE'); setCode('') }}
-              className="w-full text-center text-sm text-green-700 hover:text-green-800 flex items-center justify-center gap-1"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              تغییر شماره
-            </button>
+            <div className="flex items-center justify-between text-sm">
+              <button
+                onClick={async () => {
+                  if (resendIn > 0) return
+                  setCode('')
+                  await requestOTP()
+                }}
+                disabled={resendIn > 0 || loading}
+                className={`font-medium ${resendIn > 0 ? 'text-gray-400' : 'text-green-700 hover:text-green-800'}`}
+              >
+                {resendIn > 0 ? `ارسال مجدد تا ${faNum(String(resendIn))} ثانیه` : 'ارسال مجدد کد'}
+              </button>
+              <button
+                onClick={() => { setStep('PHONE'); setCode(''); setDemoCode(''); setExpiresIn(0); setResendIn(0) }}
+                className="text-green-700 hover:text-green-800 flex items-center gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                تغییر شماره
+              </button>
+            </div>
           </div>
         )}
 
